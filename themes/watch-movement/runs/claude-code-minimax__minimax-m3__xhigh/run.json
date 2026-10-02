@@ -1,0 +1,27 @@
+{
+  "runId": "claude-code-minimax__minimax-m3__xhigh",
+  "theme": "watch-movement",
+  "harness": "claude-code-minimax",
+  "model": "minimax-m3",
+  "effort": "xhigh",
+  "modelArg": null,
+  "harnessVersion": "2.1.285 (Claude Code)",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T20:24:41.172Z",
+  "launchedAt": "2026-10-01T20:24:41.307Z",
+  "finishedAt": "2026-10-01T20:51:03.554Z",
+  "importedAt": "2026-10-01T20:51:19.757Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 1582247,
+    "costUsd": 13.312633999999994,
+    "tokensIn": 1246948,
+    "tokensOut": 95965,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 682397
+  },
+  "notes": true
+}

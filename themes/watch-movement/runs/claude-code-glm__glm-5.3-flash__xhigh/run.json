@@ -1,0 +1,27 @@
+{
+  "runId": "claude-code-glm__glm-5.3-flash__xhigh",
+  "theme": "watch-movement",
+  "harness": "claude-code-glm",
+  "model": "glm-5.3-flash[1m]",
+  "effort": "xhigh",
+  "modelArg": null,
+  "harnessVersion": "2.1.285 (Claude Code)",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T19:07:12.053Z",
+  "launchedAt": "2026-10-01T19:07:12.153Z",
+  "finishedAt": "2026-10-01T20:24:10.603Z",
+  "importedAt": "2026-10-01T20:24:18.995Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 4618450,
+    "costUsd": 12.387076000000004,
+    "tokensIn": 282822,
+    "tokensOut": 123380,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 554434
+  },
+  "notes": true
+}

@@ -1,0 +1,27 @@
+{
+  "runId": "opencode__muse-spark-1.3-contributor__high",
+  "theme": "watch-movement",
+  "harness": "opencode",
+  "model": "opencode-go/muse-spark-1.3-contributor",
+  "effort": "high",
+  "modelArg": "opencode-go/muse-spark-1.3-contributor",
+  "harnessVersion": "1.18.34",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T23:32:15.684Z",
+  "launchedAt": "2026-10-01T23:32:16.271Z",
+  "finishedAt": "2026-10-01T23:40:10.851Z",
+  "importedAt": "2026-10-01T23:40:21.770Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 474580,
+    "costUsd": 0.017578042000000002,
+    "tokensIn": 103146,
+    "tokensOut": 32298,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 534554
+  },
+  "notes": true
+}

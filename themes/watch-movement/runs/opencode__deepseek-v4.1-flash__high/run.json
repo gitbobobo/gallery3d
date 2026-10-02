@@ -1,0 +1,27 @@
+{
+  "runId": "opencode__deepseek-v4.1-flash__high",
+  "theme": "watch-movement",
+  "harness": "opencode",
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "effort": "high",
+  "modelArg": "opencode-go/deepseek-v4.1-flash",
+  "harnessVersion": "1.18.34",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T20:51:25.805Z",
+  "launchedAt": "2026-10-01T20:51:26.371Z",
+  "finishedAt": "2026-10-01T23:21:30.236Z",
+  "importedAt": "2026-10-01T23:21:39.539Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 9003865,
+    "costUsd": 0.30586253999999996,
+    "tokensIn": 1393630,
+    "tokensOut": 103965,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 784322
+  },
+  "notes": true
+}

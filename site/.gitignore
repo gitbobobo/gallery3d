@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.astro/
+# synced at dev/build time by scripts/sync-works.mjs — do not commit
+public/works/

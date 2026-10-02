@@ -1,0 +1,218 @@
+---
+import Base from '../../layouts/Base.astro';
+import Bubble from '../../components/Bubble.astro';
+import { baseUrl, loadThemes, workEntry, type Theme } from '../../data';
+
+export const getStaticPaths = () =>
+  loadThemes().map((theme) => ({ params: { themeId: theme.id }, props: { theme } }));
+
+interface Props { theme: Theme }
+const { theme } = Astro.props;
+const runs = theme.runs;
+
+// serializable run info for the client-side picker
+const runsJson = runs.map((r) => ({
+  id: r.id,
+  label: `${r.harness} · ${r.model} · ${r.effort}`,
+  src: workEntry(theme.id, r.id),
+  hasDist: r.hasDist,
+  status: r.status,
+}));
+
+const defA = runs[0];
+const defB = runs[1];
+const iframeAttrs = {
+  sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock',
+  allow: 'fullscreen',
+  loading: 'lazy',
+} as const;
+---
+
+<Base title={`${theme.meta.title} · 对比`}>
+  <div class="wrap page">
+    <nav class="topnav">
+      <a class="back-btn" href={baseUrl(`${theme.id}/`)} title="返回 {theme.meta.title}" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
+    </nav>
+
+    <header class="view-head">
+      <h1>对比 · {theme.meta.title}</h1>
+      <span class="meta mono">{runs.length} 份答卷中选择两份</span>
+    </header>
+
+    {runs.length === 0 ? (
+      <p class="empty-state">{'// 这道题目还没有答卷可对比。'}</p>
+    ) : (
+      <>
+        <div class="pickers">
+          <div class="picker">
+            <span class="picker-tag">答卷 A</span>
+            <div class="brow" role="radiogroup" aria-label="选择答卷 A" id="picker-a">
+              {runs.map((r) => (
+                <Bubble
+                  value={r.id}
+                  label={r.status === 'ok' ? `${r.harness} · ${r.model} · ${r.effort}` : `${r.harness} · ${r.model} · ${r.effort}（未完成）`}
+                  checked={r.id === defA?.id}
+                />
+              ))}
+            </div>
+          </div>
+          <div class="picker">
+            <span class="picker-tag">答卷 B</span>
+            <div class="brow" role="radiogroup" aria-label="选择答卷 B" id="picker-b">
+              {runs.length > 1 && <Bubble value="" label="（留空）" checked={!defB} mono={false} />}
+              {runs.map((r) => (
+                <Bubble
+                  value={r.id}
+                  label={r.status === 'ok' ? `${r.harness} · ${r.model} · ${r.effort}` : `${r.harness} · ${r.model} · ${r.effort}（未完成）`}
+                  checked={r.id === defB?.id}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div class="cmp-seg-wrap">
+          <div class="seg" role="group" aria-label="切换窗格" id="pane-seg">
+            <button type="button" aria-pressed="true" data-pane="a">A</button>
+            <button type="button" aria-pressed="false" data-pane="b">B</button>
+          </div>
+        </div>
+
+        <div class="compare-grid">
+          <div class="pane pane-a active" id="pane-a">
+            <figure>
+              <div class="stage">
+                {defA?.hasDist ? (
+                  <iframe id="frame-a" {...iframeAttrs} src={workEntry(theme.id, defA.id)} title={`答卷 A — ${defA.id}`}></iframe>
+                ) : (
+                  <iframe id="frame-a" {...iframeAttrs} title="答卷 A" hidden></iframe>
+                )}
+                <div class="no-dist" id="empty-a" hidden={!!defA?.hasDist}>
+                  {defA ? '这份答卷没有提交产物' : '还差一份答卷 —— 等待另一组提交。'}
+                </div>
+              </div>
+              <figcaption>
+                <span class="pane-tag">A</span>
+                <span id="cap-a">{defA ? `${defA.harness} · ${defA.model} · ${defA.effort}` : '—'}</span>
+              </figcaption>
+            </figure>
+          </div>
+          <div class="pane pane-b" id="pane-b">
+            <figure>
+              <div class="stage">
+                {defB?.hasDist ? (
+                  <iframe id="frame-b" {...iframeAttrs} src={workEntry(theme.id, defB.id)} title={`答卷 B — ${defB.id}`}></iframe>
+                ) : (
+                  <iframe id="frame-b" {...iframeAttrs} title="答卷 B" hidden></iframe>
+                )}
+                <div class="no-dist" id="empty-b" hidden={!!defB?.hasDist}>
+                  {defB ? '这份答卷没有提交产物' : '还差一份答卷 —— 等待另一组提交。'}
+                </div>
+              </div>
+              <figcaption>
+                <span class="pane-tag">B</span>
+                <span id="cap-b">{defB ? `${defB.harness} · ${defB.model} · ${defB.effort}` : '还差一份答卷'}</span>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </>
+    )}
+
+    <footer class="footer">
+      <span>GALLERY3D — {theme.id} / compare</span>
+      <span>A / B</span>
+    </footer>
+  </div>
+
+  {runs.length > 0 && (
+    <script type="application/json" id="runs-data" set:html={JSON.stringify(runsJson)} />
+  )}
+  {runs.length > 0 && (
+    <script>
+      interface RunInfo { id: string; label: string; src: string; hasDist: boolean; status: string }
+      const RUNS: RunInfo[] = JSON.parse(document.getElementById('runs-data')!.textContent!);
+      const byId = new Map(RUNS.map((r) => [r.id, r]));
+
+      const els = {
+        a: {
+          frame: document.getElementById('frame-a') as HTMLIFrameElement,
+          empty: document.getElementById('empty-a') as HTMLElement,
+          cap: document.getElementById('cap-a') as HTMLElement,
+          picker: document.getElementById('picker-a') as HTMLElement,
+        },
+        b: {
+          frame: document.getElementById('frame-b') as HTMLIFrameElement,
+          empty: document.getElementById('empty-b') as HTMLElement,
+          cap: document.getElementById('cap-b') as HTMLElement,
+          picker: document.getElementById('picker-b') as HTMLElement,
+        },
+      };
+
+      const q = new URLSearchParams(location.search);
+      const pick = (v: string | null, fallback: string) =>
+        v && byId.has(v) ? v : fallback;
+      let sel = {
+        a: pick(q.get('a'), RUNS[0]?.id ?? ''),
+        b: q.has('b') ? pick(q.get('b'), '') : (RUNS[1]?.id ?? ''),
+      };
+
+      function syncPicker(slot: 'a' | 'b') {
+        els[slot].picker.querySelectorAll('.bubble').forEach((b) =>
+          b.setAttribute('aria-checked', String((b as HTMLElement).dataset.value === sel[slot])),
+        );
+      }
+
+      function render(slot: 'a' | 'b') {
+        const { frame, empty, cap } = els[slot];
+        const run = byId.get(sel[slot]);
+        if (run?.hasDist) {
+          if (frame.getAttribute('src') !== run.src) frame.setAttribute('src', run.src);
+          frame.hidden = false;
+          empty.hidden = true;
+          cap.textContent = run.label;
+        } else {
+          frame.hidden = true;
+          frame.removeAttribute('src');
+          empty.hidden = false;
+          empty.textContent = run
+            ? '// 这份答卷没有提交产物 —— 空白卷。'
+            : '// 还差一份答卷 —— 等待另一组提交。';
+          cap.textContent = run ? `${run.label}（无产物）` : '还差一份答卷';
+        }
+        syncPicker(slot);
+      }
+
+      function apply() {
+        render('a');
+        render('b');
+        const u = new URL(location.href);
+        u.searchParams.set('a', sel.a);
+        u.searchParams.set('b', sel.b);
+        history.replaceState(null, '', u);
+      }
+
+      (['a', 'b'] as const).forEach((slot) => {
+        els[slot].picker.addEventListener('click', (e) => {
+          const btn = (e.target as HTMLElement).closest<HTMLElement>('.bubble');
+          if (!btn) return;
+          sel[slot] = btn.dataset.value ?? '';
+          apply();
+        });
+      });
+
+      // narrow screens: A/B segmented pane switcher
+      const seg = document.getElementById('pane-seg');
+      seg?.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-pane]');
+        if (!btn) return;
+        seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        document.getElementById('pane-a')!.classList.toggle('active', btn.dataset.pane === 'a');
+        document.getElementById('pane-b')!.classList.toggle('active', btn.dataset.pane === 'b');
+      });
+
+      apply();
+    </script>
+  )}
+</Base>

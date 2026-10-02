@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>机械表机芯 · 3D</title>
+    <style>
+      :root {
+        --brass: #e0b25a;
+        --brass-soft: rgba(224, 178, 90, 0.18);
+        --ink: #eef1f5;
+        --mute: #9aa4b2;
+        --panel: rgba(14, 18, 25, 0.78);
+        --line: rgba(255, 255, 255, 0.1);
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #07090d; color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+      #stage { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 42%, #243044 0%, #0f1520 55%, #06080c 100%); touch-action: none; }
+      #stage canvas { display: block; width: 100%; height: 100%; outline: none; cursor: grab; }
+      #stage canvas:active { cursor: grabbing; }
+
+      .glass { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 14px; }
+
+      #title { position: fixed; left: 18px; top: 16px; pointer-events: none; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+      #title h1 { margin: 0; font-size: 20px; letter-spacing: .08em; font-weight: 600; }
+      #title h1 b { color: var(--brass); font-weight: 600; }
+      #title p { margin: 4px 0 0; font-size: 12px; color: var(--mute); letter-spacing: .04em; }
+
+      #tools { position: fixed; right: 14px; top: 14px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+      .btn { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background .15s, border-color .15s, color .15s; white-space: nowrap; }
+      .btn:hover { border-color: rgba(224,178,90,.5); }
+      .btn.on { background: var(--brass-soft); border-color: var(--brass); color: #ffe3a6; }
+      #explodeBox { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; border-radius: 999px; }
+      #explodeBox input { width: 96px; accent-color: var(--brass); }
+
+      #bottom { position: fixed; left: 0; right: 0; bottom: 0; padding: 0 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+      #bottom > * { pointer-events: auto; }
+      #info { width: min(560px, 100%); padding: 14px 16px 14px; align-self: flex-start; display: none; max-height: 42vh; overflow: auto; }
+      #info.show { display: block; animation: rise .22s ease-out; }
+      @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      #info h2 { margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: baseline; gap: 10px; }
+      #info h2 small { font-size: 12px; color: var(--mute); font-weight: 400; letter-spacing: .03em; }
+      #info p { margin: 8px 0 10px; font-size: 14px; line-height: 1.65; color: #d7dde6; }
+      #facts { display: flex; flex-wrap: wrap; gap: 6px; }
+      #facts span { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--brass-soft); color: #f1d594; border: 1px solid rgba(224,178,90,.28); }
+      #live { margin-top: 8px; font-size: 12px; color: var(--mute); font-variant-numeric: tabular-nums; }
+      #close { position: absolute; right: 8px; top: 6px; width: 30px; height: 30px; border: 0; background: transparent; color: var(--mute); font-size: 20px; cursor: pointer; border-radius: 50%; }
+      #close:hover { color: var(--ink); background: rgba(255,255,255,.08); }
+      #hint { font-size: 13px; color: var(--mute); padding: 8px 14px; border-radius: 999px; align-self: center; text-align: center; }
+      #hint.hide { display: none; }
+
+      #speedBar { display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; max-width: 100%; }
+      #speedBar .lab { font-size: 12px; color: var(--mute); padding: 0 8px 0 10px; white-space: nowrap; }
+      #speedBar button { font: inherit; font-size: 13px; color: var(--mute); background: transparent; border: 0; border-radius: 999px; padding: 7px 13px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+      #speedBar button:hover { color: var(--ink); }
+      #speedBar button.on { background: var(--brass); color: #20180a; font-weight: 600; }
+      #note { font-size: 12px; color: var(--mute); text-align: center; min-height: 16px; text-shadow: 0 1px 8px #000; }
+
+      #label { position: fixed; left: 0; top: 0; pointer-events: none; transform: translate(-50%, -100%); display: none; z-index: 5; }
+      #label.show { display: block; }
+      #label .tag { background: rgba(10,13,19,.88); color: #fff; border: 1px solid var(--brass); border-radius: 8px; padding: 4px 10px; font-size: 13px; white-space: nowrap; margin-bottom: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+      #label::after { content: ""; position: absolute; left: 50%; bottom: -1px; width: 9px; height: 9px; transform: translate(-50%, 50%); border-radius: 50%; background: var(--brass); box-shadow: 0 0 0 4px rgba(224,178,90,.28); }
+      #label::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 1px; height: 8px; background: var(--brass); }
+
+      #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--mute); font-size: 14px; letter-spacing: .1em; pointer-events: none; transition: opacity .6s; }
+      #loading.done { opacity: 0; }
+
+      @media (max-width: 640px) {
+        #title { left: 12px; top: 12px; }
+        #title h1 { font-size: 16px; }
+        #title p { font-size: 11px; }
+        #tools { right: 10px; top: 10px; gap: 6px; }
+        .btn { padding: 6px 11px; font-size: 12px; }
+        #explodeBox { font-size: 12px; padding: 5px 10px; }
+        #explodeBox input { width: 72px; }
+        #bottom { padding: 0 10px calc(10px + env(safe-area-inset-bottom)); gap: 8px; }
+        #info { padding: 12px 14px; max-height: 34vh; }
+        #info h2 { font-size: 16px; }
+        #info p { font-size: 13px; margin: 6px 0 8px; line-height: 1.6; }
+        #hint { font-size: 12px; padding: 6px 12px; }
+        #speedBar .lab { display: none; }
+        #speedBar button { padding: 7px 10px; font-size: 12px; }
+      }
+      @media (max-height: 520px) {
+        #info { max-height: 50vh; width: min(440px, 62vw); }
+        #title p { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="title">
+      <h1><b>机芯</b> · 机械表 3D</h1>
+      <p>28,800 次/小时 · 4 Hz · 15 齿擒纵轮</p>
+    </div>
+    <div id="tools">
+      <button class="btn" id="btnBridges" title="隐藏夹板，露出下面的轮系 (B)">隐藏夹板</button>
+      <div class="glass" id="explodeBox"><span>分层展开</span><input id="explode" type="range" min="0" max="100" value="0" /></div>
+      <button class="btn" id="btnPause" title="暂停或继续 (空格)">暂停</button>
+    </div>
+    <div id="bottom">
+      <div class="glass" id="info">
+        <button id="close" aria-label="关闭">×</button>
+        <h2><span id="iName"></span><small id="iEn"></small></h2>
+        <p id="iRole"></p>
+        <div id="facts"></div>
+        <div id="live"></div>
+      </div>
+      <div class="glass" id="hint">点击任意零件，查看名称和作用 · 拖动旋转 · 滚轮缩放</div>
+      <div id="note"></div>
+      <div class="glass" id="speedBar"></div>
+    </div>
+    <div id="label"><div class="tag" id="labelText"></div></div>
+    <div id="loading">正在装配机芯…</div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

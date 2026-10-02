@@ -1,0 +1,27 @@
+{
+  "runId": "droid__gemini-3.8-flash__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "gemini-3.8-flash",
+  "effort": "high",
+  "modelArg": "gemini-3.8-flash",
+  "harnessVersion": "0.231.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T00:36:34.001Z",
+  "launchedAt": "2026-10-02T00:36:34.033Z",
+  "finishedAt": "2026-10-02T00:58:14.981Z",
+  "importedAt": "2026-10-02T00:58:27.117Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 1300948,
+    "costUsd": null,
+    "tokensIn": 9380116,
+    "tokensOut": 99641,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 656929
+  },
+  "notes": true
+}

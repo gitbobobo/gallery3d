@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a171f" />
+    <title>Calibre 04 — 机械机芯</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="Calibre 04 首页">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand-name">ATELIER <b>·</b> HOROLOGY</span>
+        </a>
+        <div class="top-meta">
+          <span class="edition">机芯解剖 <span>／</span> STUDY 04</span>
+          <span class="live-status"><i></i> LIVE MOVEMENT</span>
+        </div>
+      </header>
+
+      <main class="workspace" id="top">
+        <section class="stage" aria-label="可交互的机械机芯模型">
+          <div class="stage-copy">
+            <p class="eyebrow">A STUDY IN MECHANICAL TIME</p>
+            <h1>时间，<em>由齿而行。</em></h1>
+            <p class="intro">从发条盒到摆轮，沿着每一次啮合，观察能量如何变成节拍。</p>
+          </div>
+
+          <div class="canvas-frame" id="canvas-frame">
+            <canvas id="movement" aria-label="3D 机械表机芯模型"></canvas>
+            <div class="scene-index" aria-hidden="true">
+              <span class="index-rule"></span>
+              <span>动力路径</span>
+              <span class="index-arrow">↗</span>
+            </div>
+            <div class="scene-readout" aria-hidden="true">
+              <span class="readout-pulse"></span>
+              <span>振频</span>
+              <b>4 Hz</b>
+            </div>
+            <div class="scene-hint" id="scene-hint">
+              <span class="hint-mouse" aria-hidden="true"></span>
+              拖动旋转 <i>·</i> 滚轮缩放 <i>·</i> 点击零件
+            </div>
+            <div class="loading-state" id="loading-state">
+              <span class="loader"></span>
+              <span>正在装配机芯</span>
+            </div>
+          </div>
+
+          <div class="stage-foot">
+            <span><b>CAL.</b> 04 / 手动上链</span>
+            <span class="foot-note">黄铜轮系 <i>×</i> 蓝钢擒纵</span>
+          </div>
+        </section>
+
+        <aside class="inspector" aria-label="零件说明">
+          <div class="inspector-head">
+            <div>
+              <p class="eyebrow">MOVEMENT ANATOMY</p>
+              <h2>机芯剖读</h2>
+            </div>
+            <span class="head-index">04<span>—</span>01</span>
+          </div>
+
+          <section class="part-card" aria-live="polite">
+            <div class="part-card-top">
+              <span class="part-kicker" id="part-kicker">调速机构 · REGULATOR</span>
+              <span class="part-live"><i></i> 运转中</span>
+            </div>
+            <h3 id="part-title">摆轮</h3>
+            <p class="part-description" id="part-description">摆轮与游丝往复振荡，为整枚机芯提供稳定的时间基准。</p>
+            <div class="part-divider"></div>
+            <div class="part-specs">
+              <div>
+                <span class="spec-label">工作方式</span>
+                <b id="part-action">往复摆动</b>
+              </div>
+              <div>
+                <span class="spec-label">标称振频</span>
+                <b id="part-value">4 Hz <small>／ 28,800 次·小时</small></b>
+              </div>
+            </div>
+          </section>
+
+          <section class="gear-path">
+            <div class="section-heading">
+              <h3>动力传递</h3>
+              <span>POWER TRAIN</span>
+            </div>
+            <div class="pathline">
+              <span class="path-node" aria-hidden="true"></span>
+              <button type="button" class="path-step" data-part="barrel">
+                <span class="path-name">发条盒</span><span class="path-teeth">96 齿</span>
+              </button>
+              <button type="button" class="path-step" data-part="center">
+                <span class="path-name">中心轮</span><span class="path-teeth">80 / 12</span>
+              </button>
+              <button type="button" class="path-step" data-part="third">
+                <span class="path-name">三轮</span><span class="path-teeth">75 / 10</span>
+              </button>
+              <button type="button" class="path-step" data-part="fourth">
+                <span class="path-name">四轮</span><span class="path-teeth">80 / 10</span>
+              </button>
+              <button type="button" class="path-step" data-part="escape">
+                <span class="path-name">擒纵轮</span><span class="path-teeth">15 齿</span>
+              </button>
+              <span class="path-node path-node-end" aria-hidden="true"></span>
+            </div>
+            <p class="path-caption">相邻啮合按齿数比反向传动；同轴大小轮同步。</p>
+          </section>
+
+          <section class="escapement-note">
+            <div class="section-heading">
+              <h3>擒纵与调速</h3>
+              <span>ESCAPEMENT</span>
+            </div>
+            <div class="note-row">
+              <span class="note-gem" aria-hidden="true"></span>
+              <button type="button" data-part="fork"><b>擒纵叉</b><small>锁住并释放擒纵轮</small></button>
+            </div>
+            <div class="note-row">
+              <span class="note-gem note-gem-steel" aria-hidden="true"></span>
+              <button type="button" data-part="balance"><b>摆轮 · 游丝</b><small>往复振荡，校准走时节拍</small></button>
+            </div>
+          </section>
+
+          <div class="selection-tip"><span>↖</span> 点击模型或零件名称，查看结构说明</div>
+        </aside>
+      </main>
+
+      <footer class="controlbar">
+        <div class="motion-readout">
+          <span class="readout-label">SIMULATION</span>
+          <span class="motion-line"><i></i><b id="motion-state">机芯运行</b><span class="motion-separator">/</span><span id="speed-label">速度 ×1</span></span>
+        </div>
+        <div class="control-actions">
+          <button type="button" class="control-button" id="toggle-motion" aria-label="暂停机芯">
+            <span class="pause-icon" aria-hidden="true"><i></i><i></i></span>
+            <span id="toggle-label">暂停</span>
+          </button>
+          <button type="button" class="control-button" id="speed-button" aria-label="切换运转速度">
+            <span class="speed-icon" aria-hidden="true">×</span>
+            <span>倍率</span>
+          </button>
+          <button type="button" class="control-button reset-button" id="reset-view" aria-label="重置视角">
+            <span class="reset-icon" aria-hidden="true">↺</span>
+            <span>重置视角</span>
+          </button>
+        </div>
+        <div class="footer-stamp">MECHANICAL STUDY <span>·</span> 01 / 01</div>
+      </footer>
+    </div>
+  </body>
+</html>

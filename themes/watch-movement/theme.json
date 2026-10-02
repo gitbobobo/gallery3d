@@ -1,0 +1,10 @@
+{
+  "id": "watch-movement",
+  "title": "机械表机芯",
+  "category": "3d",
+  "tags": ["机械", "动画", "交互"],
+  "lang": "zh",
+  "allowExternalAssets": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "createdAt": "2026-10-01T16:20:00.000Z"
+}

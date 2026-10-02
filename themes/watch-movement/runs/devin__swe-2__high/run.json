@@ -1,0 +1,27 @@
+{
+  "runId": "devin__swe-2__high",
+  "theme": "watch-movement",
+  "harness": "devin",
+  "model": "swe-2-high",
+  "effort": "high",
+  "modelArg": "swe-2-high",
+  "harnessVersion": "devin 3000.11.3 (9c803229faa4)",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T16:52:11.327Z",
+  "launchedAt": "2026-10-01T16:52:11.344Z",
+  "finishedAt": "2026-10-01T17:12:28.245Z",
+  "importedAt": "2026-10-01T17:12:36.800Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 1216901,
+    "costUsd": null,
+    "tokensIn": 9683496,
+    "tokensOut": 93249,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 2199952
+  },
+  "notes": true
+}

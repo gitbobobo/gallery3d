@@ -1,0 +1,53 @@
+{
+  "harnesses": [
+    {
+      "id": "claude-code-glm",
+      "displayName": "Claude Code (GLM)",
+      "adapter": "claude-code-glm",
+      "bin": "claude",
+      "notes": "走用户 ~/.claude/settings.json（ANTHROPIC_MODEL=glm-5.3-flash[1m]），不传 --model"
+    },
+    {
+      "id": "claude-code-minimax",
+      "displayName": "Claude Code (MiniMax)",
+      "adapter": "claude-code-minimax",
+      "bin": "claude",
+      "notes": "额外加 --settings ~/.claude/settings.minimax.json，模型 MiniMax-M3"
+    },
+    {
+      "id": "codex",
+      "displayName": "Codex CLI",
+      "adapter": "codex",
+      "bin": "codex",
+      "notes": "codex exec --json；workspace-write 沙箱 + network_access=true + writable_roots 放行 pnpm store"
+    },
+    {
+      "id": "cursor",
+      "displayName": "Cursor Agent",
+      "adapter": "cursor",
+      "bin": "cursor-agent",
+      "notes": "cursor-agent -p --force --sandbox enabled --output-format stream-json；沙箱弄坏 pnpm 时重试 --sandbox disabled"
+    },
+    {
+      "id": "devin",
+      "displayName": "Devin CLI",
+      "adapter": "devin",
+      "bin": "devin",
+      "notes": "devin -p --permission-mode dangerous --respect-workspace-trust false --export transcript.json（--sandbox 会强制回 autonomous，autonomous 会拒绝写文件工具，故不带沙箱）"
+    },
+    {
+      "id": "droid",
+      "displayName": "Factory Droid",
+      "adapter": "droid",
+      "bin": "droid",
+      "notes": "droid exec --auto high -o stream-json；输出格式报错时降级 json → text"
+    },
+    {
+      "id": "opencode",
+      "displayName": "opencode",
+      "adapter": "opencode",
+      "bin": "opencode",
+      "notes": "opencode run --format json；用 OPENCODE_CONFIG 指向工作区外生成的配置覆盖子 agent 模型"
+    }
+  ]
+}

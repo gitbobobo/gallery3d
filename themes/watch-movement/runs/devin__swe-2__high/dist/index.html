@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="icon" href="data:,">
+<title>机械表机芯 · 3D</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(120% 90% at 50% 30%, #1c2230 0%, #10141d 55%, #080a10 100%);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, "Segoe UI", sans-serif;
+    color: #dfe4ee;
+    touch-action: none;
+  }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  #title {
+    position: fixed; top: 14px; left: 16px; z-index: 5;
+    pointer-events: none; user-select: none;
+  }
+  #title h1 {
+    font-size: 17px; font-weight: 600; letter-spacing: .12em; color: #e8dcc0;
+  }
+  #title p {
+    margin-top: 3px; font-size: 11px; letter-spacing: .08em; color: #8b93a6;
+  }
+
+  #hud {
+    position: fixed; left: 16px; bottom: 14px; z-index: 5;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    user-select: none;
+  }
+  #hud .hint { font-size: 11px; color: #79839a; letter-spacing: .05em; margin-right: 4px; }
+  .seg {
+    display: flex; border: 1px solid #2c3550; border-radius: 8px; overflow: hidden;
+    background: rgba(16, 20, 30, .72); backdrop-filter: blur(6px);
+  }
+  .seg button {
+    appearance: none; border: 0; background: transparent; color: #9aa4bb;
+    font-size: 11px; padding: 6px 10px; cursor: pointer; letter-spacing: .05em;
+  }
+  .seg button + button { border-left: 1px solid #2c3550; }
+  .seg button.on { background: #3a4a72; color: #f0e9d8; }
+  .seg button:active { background: #46598a; }
+
+  #info {
+    position: fixed; right: 16px; bottom: 14px; z-index: 6;
+    width: min(320px, calc(100vw - 32px));
+    background: rgba(18, 22, 33, .86); backdrop-filter: blur(10px);
+    border: 1px solid #33405e; border-radius: 12px;
+    padding: 14px 16px 13px;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  #info.show { opacity: 1; transform: none; pointer-events: auto; }
+  #info h2 { font-size: 15px; font-weight: 600; color: #f0e6c8; letter-spacing: .08em; }
+  #info .en { font-size: 10px; color: #6d7791; letter-spacing: .14em; text-transform: uppercase; margin-top: 2px; }
+  #info p { margin-top: 8px; font-size: 12.5px; line-height: 1.65; color: #bfc7d8; }
+  #info .spec { margin-top: 8px; font-size: 11px; color: #7f8aa3; letter-spacing: .04em; }
+  #info .x {
+    position: absolute; top: 8px; right: 10px; width: 24px; height: 24px;
+    border: 0; border-radius: 6px; background: transparent; color: #7f8aa3;
+    font-size: 15px; cursor: pointer; line-height: 1;
+  }
+  #info .x:hover { color: #e8dcc0; background: #2a3350; }
+
+  @media (max-width: 560px) {
+    #title h1 { font-size: 14px; }
+    #info { left: 12px; right: 12px; bottom: 12px; width: auto; }
+    #hud { bottom: auto; top: 52px; left: 12px; }
+    #hud .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="title">
+  <h1>机械表机芯</h1>
+  <p>LEVER ESCAPEMENT · 10 800 A/h</p>
+</div>
+
+<div id="hud">
+  <span class="hint">拖动旋转 · 滚轮/双指缩放 · 点击零件查看说明</span>
+  <div class="seg" id="speed">
+    <button data-s="1" class="on">1×</button>
+    <button data-s="10">10×</button>
+    <button data-s="60">60×</button>
+  </div>
+</div>
+
+<div id="info">
+  <button class="x" id="infoX">×</button>
+  <h2 id="infoName"></h2>
+  <div class="en" id="infoEn"></div>
+  <p id="infoDesc"></p>
+  <div class="spec" id="infoSpec"></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

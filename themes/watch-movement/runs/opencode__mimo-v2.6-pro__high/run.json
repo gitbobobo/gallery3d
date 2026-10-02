@@ -1,0 +1,29 @@
+{
+  "runId": "opencode__mimo-v2.6-pro__high",
+  "theme": "watch-movement",
+  "harness": "opencode",
+  "model": "opencode-go/mimo-v2.6-pro",
+  "effort": "high",
+  "modelArg": "opencode-go/mimo-v2.6-pro",
+  "harnessVersion": "1.18.34",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T00:13:04.217Z",
+  "launchedAt": "2026-10-02T00:13:04.563Z",
+  "finishedAt": "2026-10-02T00:45:32.940Z",
+  "importedAt": "2026-10-02T00:45:32.945Z",
+  "status": "incomplete",
+  "reasons": [
+    "没有产物"
+  ],
+  "stats": {
+    "durationMs": 1948377,
+    "costUsd": 0.05375034000000001,
+    "tokensIn": 10066,
+    "tokensOut": 56445,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 0
+  },
+  "notes": false
+}

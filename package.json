@@ -1,0 +1,9 @@
+{
+  "name": "gallery3d",
+  "private": true,
+  "scripts": {
+    "g": "pnpm --filter @gallery3d/cli g",
+    "site:dev": "pnpm --filter @gallery3d/site dev",
+    "site:build": "pnpm --filter @gallery3d/site build"
+  }
+}

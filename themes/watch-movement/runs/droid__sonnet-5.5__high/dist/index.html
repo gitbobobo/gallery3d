@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>机械表机芯 · 3D</title>
+    <style>:root{--brass:#e0b25a;--brass-soft:#e0b25a2e;--ink:#eef1f5;--mute:#9aa4b2;--panel:#0e1219c7;--line:#ffffff1a}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{height:100%;color:var(--ink);background:#07090d;margin:0;font-family:-apple-system,BlinkMacSystemFont,PingFang SC,Hiragino Sans GB,Microsoft YaHei,Noto Sans SC,sans-serif;overflow:hidden}#stage{touch-action:none;background:radial-gradient(at 50% 42%,#243044 0%,#0f1520 55%,#06080c 100%);position:fixed;inset:0}#stage canvas{cursor:grab;outline:none;width:100%;height:100%;display:block}#stage canvas:active{cursor:grabbing}.glass{background:var(--panel);border:1px solid var(--line);-webkit-backdrop-filter:blur(10px);border-radius:14px}#title{pointer-events:none;text-shadow:0 2px 12px #0009;position:fixed;top:16px;left:18px}#title h1{letter-spacing:.08em;margin:0;font-size:20px;font-weight:600}#title h1 b{color:var(--brass);font-weight:600}#title p{color:var(--mute);letter-spacing:.04em;margin:4px 0 0;font-size:12px}#tools{flex-direction:column;align-items:flex-end;gap:8px;display:flex;position:fixed;top:14px;right:14px}.btn{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);cursor:pointer;-webkit-backdrop-filter:blur(10px);white-space:nowrap;border-radius:999px;padding:7px 14px;font-size:13px;transition:background .15s,border-color .15s,color .15s}.btn:hover{border-color:#e0b25a80}.btn.on{background:var(--brass-soft);border-color:var(--brass);color:#ffe3a6}#explodeBox{border-radius:999px;align-items:center;gap:8px;padding:6px 12px;font-size:13px;display:flex}#explodeBox input{width:96px;accent-color:var(--brass)}#bottom{padding:0 14px calc(14px + env(safe-area-inset-bottom));pointer-events:none;flex-direction:column;align-items:center;gap:10px;display:flex;position:fixed;bottom:0;left:0;right:0}#bottom>*{pointer-events:auto}#info{align-self:flex-start;width:min(560px,100%);max-height:42vh;padding:14px 16px;display:none;overflow:auto}#info.show{animation:.22s ease-out rise;display:block}@keyframes rise{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}#info h2{align-items:baseline;gap:10px;margin:0;font-size:18px;font-weight:600;display:flex}#info h2 small{color:var(--mute);letter-spacing:.03em;font-size:12px;font-weight:400}#info p{color:#d7dde6;margin:8px 0 10px;font-size:14px;line-height:1.65}#facts{flex-wrap:wrap;gap:6px;display:flex}#facts span{background:var(--brass-soft);color:#f1d594;border:1px solid #e0b25a47;border-radius:999px;padding:3px 9px;font-size:12px}#live{color:var(--mute);font-variant-numeric:tabular-nums;margin-top:8px;font-size:12px}#close{width:30px;height:30px;color:var(--mute);cursor:pointer;background:0 0;border:0;border-radius:50%;font-size:20px;position:absolute;top:6px;right:8px}#close:hover{color:var(--ink);background:#ffffff14}#hint{color:var(--mute);text-align:center;border-radius:999px;align-self:center;padding:8px 14px;font-size:13px}#hint.hide{display:none}#speedBar{border-radius:999px;align-items:center;gap:4px;max-width:100%;padding:5px;display:flex}#speedBar .lab{color:var(--mute);white-space:nowrap;padding:0 8px 0 10px;font-size:12px}#speedBar button{font:inherit;color:var(--mute);cursor:pointer;white-space:nowrap;background:0 0;border:0;border-radius:999px;padding:7px 13px;font-size:13px;transition:background .15s,color .15s}#speedBar button:hover{color:var(--ink)}#speedBar button.on{background:var(--brass);color:#20180a;font-weight:600}#note{color:var(--mute);text-align:center;text-shadow:0 1px 8px #000;min-height:16px;font-size:12px}#label{pointer-events:none;z-index:5;display:none;position:fixed;top:0;left:0;transform:translate(-50%,-100%)}#label.show{display:block}#label .tag{color:#fff;border:1px solid var(--brass);white-space:nowrap;background:#0a0d13e0;border-radius:8px;margin-bottom:8px;padding:4px 10px;font-size:13px;box-shadow:0 6px 20px #00000080}#label:after{content:"";background:var(--brass);border-radius:50%;width:9px;height:9px;position:absolute;bottom:-1px;left:50%;transform:translate(-50%,50%);box-shadow:0 0 0 4px #e0b25a47}#label:before{content:"";background:var(--brass);width:1px;height:8px;position:absolute;bottom:0;left:50%}#loading{color:var(--mute);letter-spacing:.1em;pointer-events:none;justify-content:center;align-items:center;font-size:14px;transition:opacity .6s;display:flex;position:fixed;inset:0}#loading.done{opacity:0}@media (width<=640px){#title{top:12px;left:12px}#title h1{font-size:16px}#title p{font-size:11px}#tools{gap:6px;top:10px;right:10px}.btn{padding:6px 11px;font-size:12px}#explodeBox{padding:5px 10px;font-size:12px}#explodeBox input{width:72px}#bottom{padding:0 10px calc(10px + env(safe-area-inset-bottom));gap:8px}#info{max-height:34vh;padding:12px 14px}#info h2{font-size:16px}#info p{margin:6px 0 8px;font-size:13px;line-height:1.6}#hint{padding:6px 12px;font-size:12px}#speedBar .lab{display:none}#speedBar button{padding:7px 10px;font-size:12px}}@media (height<=520px){#info{width:min(440px,62vw);max-height:50vh}#title p{display:none}}</style>
+    <script type="module" crossorigin src="./assets/index-BDOTBMV1.js"></script>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="title">
+      <h1><b>机芯</b> · 机械表 3D</h1>
+      <p>28,800 次/小时 · 4 Hz · 15 齿擒纵轮</p>
+    </div>
+    <div id="tools">
+      <button class="btn" id="btnBridges" title="隐藏夹板，露出下面的轮系 (B)">隐藏夹板</button>
+      <div class="glass" id="explodeBox"><span>分层展开</span><input id="explode" type="range" min="0" max="100" value="0" /></div>
+      <button class="btn" id="btnPause" title="暂停或继续 (空格)">暂停</button>
+    </div>
+    <div id="bottom">
+      <div class="glass" id="info">
+        <button id="close" aria-label="关闭">×</button>
+        <h2><span id="iName"></span><small id="iEn"></small></h2>
+        <p id="iRole"></p>
+        <div id="facts"></div>
+        <div id="live"></div>
+      </div>
+      <div class="glass" id="hint">点击任意零件，查看名称和作用 · 拖动旋转 · 滚轮缩放</div>
+      <div id="note"></div>
+      <div class="glass" id="speedBar"></div>
+    </div>
+    <div id="label"><div class="tag" id="labelText"></div></div>
+    <div id="loading">正在装配机芯…</div>
+  </body>
+</html>

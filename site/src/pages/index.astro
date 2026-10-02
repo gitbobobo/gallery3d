@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import Bubble from '../components/Bubble.astro';
+import { loadThemes, baseUrl, workUrl } from '../data';
+
+const themes = loadThemes();
+const categories = [...new Set(themes.map((t) => t.meta.category))].sort();
+const catLabel = (c: string) => (c === '3d' ? '3D' : c === 'web' ? '网页' : c);
+---
+
+<Base>
+  <div class="wrap">
+    <header class="masthead">
+      <h1 class="site-title">
+        <span class="en">GALLERY3D · ANSWER SHEETS</span>
+        答卷画廊
+      </h1>
+      <p class="tagline">同一道题目，不同 AI 组合的答卷<span class="dot">。</span></p>
+    </header>
+
+    {categories.length >= 2 && (
+      <nav class="catnav" aria-label="题目分类">
+        <div class="brow" role="radiogroup" aria-label="分类筛选" data-group="cat">
+          <span class="brow-label">分类</span>
+          <Bubble value="" label="全部" checked />
+          {categories.map((c) => <Bubble value={c} label={catLabel(c)} mono={false} />)}
+        </div>
+      </nav>
+    )}
+
+    <main class="theme-list" id="theme-list">
+      {themes.length === 0 && (
+        <p class="empty-state">{'// 还没有题目 —— 等第一份试卷发下来。'}</p>
+      )}
+      {themes.map((t) => {
+        const okRuns = t.runs.filter((r) => r.status === 'ok');
+        const thumbs = t.runs.filter((r) => r.coverDesktop);
+        return (
+          <a class="theme-row" href={baseUrl(`${t.id}/`)} data-category={t.meta.category}>
+            <span class="stamp">{catLabel(t.meta.category)}</span>
+            <div class="thead">
+              <h2>{t.meta.title}</h2>
+              <span class="tmeta">
+                {t.runs.length} 份答卷
+                {okRuns.length < t.runs.length && ` · ${t.runs.length - okRuns.length} 未完成`}
+                {t.meta.tags.length > 0 && ` · ${t.meta.tags.join(' / ')}`}
+              </span>
+            </div>
+            {thumbs.length > 0 ? (
+              <div class="thumb-strip" aria-hidden="true">
+                {thumbs.slice(0, 8).map((r) => (
+                  <img
+                    src={`${workUrl(t.id, r.id)}${r.coverDesktop}`}
+                    alt=""
+                    loading="lazy"
+                    width="150"
+                    height="94"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div class="thumb-strip" aria-hidden="true">
+                <span class="empty-note">— 空白答题区 —</span>
+              </div>
+            )}
+          </a>
+        );
+      })}
+    </main>
+
+    <footer class="footer">
+      <span>GALLERY3D — AI 答卷陈列室</span>
+      <span>OMR · 填涂作答</span>
+    </footer>
+  </div>
+
+  {categories.length >= 2 && (
+    <script>
+      // category bubble row -> filter theme rows
+      const group = document.querySelector('.brow[data-group="cat"]');
+      const rows = [...document.querySelectorAll('.theme-row')];
+      group?.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('.bubble') as HTMLElement | null;
+        if (!btn) return;
+        group.querySelectorAll('.bubble').forEach((b) => b.setAttribute('aria-checked', 'false'));
+        btn.setAttribute('aria-checked', 'true');
+        const v = btn.dataset.value ?? '';
+        rows.forEach((r) => ((r as HTMLElement).hidden = !!v && (r as HTMLElement).dataset.category !== v));
+      });
+    </script>
+  )}
+</Base>

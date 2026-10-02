@@ -1,0 +1,69 @@
+{
+  "models": [
+    {
+      "id": "glm-5.3-flash",
+      "display": "GLM 5.3 Flash",
+      "perHarness": { "claude-code-glm": null }
+    },
+    {
+      "id": "minimax-m3",
+      "display": "MiniMax M3",
+      "perHarness": { "claude-code-minimax": null }
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "display": "GPT-6.1 Sol",
+      "perHarness": { "codex": "gpt-6.1-sol", "droid": "gpt-6.1-sol" }
+    },
+    {
+      "id": "grok-4.7",
+      "display": "Grok 4.7",
+      "perHarness": { "cursor": "grok-4.7-high" }
+    },
+    {
+      "id": "swe-2",
+      "display": "SWE-2",
+      "perHarness": { "devin": "swe-2-high" }
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "display": "DeepSeek V4.1 Flash",
+      "perHarness": { "opencode": "opencode-go/deepseek-v4.1-flash" }
+    },
+    {
+      "id": "gpt-6-astra",
+      "display": "GPT-6 Astra",
+      "perHarness": { "codex": "gpt-6-astra", "droid": "gpt-6-astra" }
+    },
+    {
+      "id": "gpt-6-luna",
+      "display": "GPT-6 Luna",
+      "perHarness": { "droid": "gpt-6-luna" }
+    },
+    {
+      "id": "sonnet-5.5",
+      "display": "Sonnet 5.5",
+      "perHarness": { "droid": "claude-sonnet-5-5" }
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "display": "Gemini 3.8 Flash",
+      "perHarness": { "droid": "gemini-3.8-flash" }
+    },
+    {
+      "id": "muse-spark-1.3-contributor",
+      "display": "Muse Spark 1.3 Contributor",
+      "perHarness": { "opencode": "opencode-go/muse-spark-1.3-contributor" }
+    },
+    {
+      "id": "mimo-v2.6-flash",
+      "display": "MiMo V2.6 Flash",
+      "perHarness": { "opencode": "opencode-go/mimo-v2.6-flash" }
+    },
+    {
+      "id": "mimo-v2.6-pro",
+      "display": "MiMo V2.6 Pro",
+      "perHarness": { "opencode": "opencode-go/mimo-v2.6-pro" }
+    }
+  ]
+}

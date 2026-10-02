@@ -1,0 +1,190 @@
+---
+import Base from '../../layouts/Base.astro';
+import Bubble from '../../components/Bubble.astro';
+import { AGENTS_MD } from '../../constraints';
+import { baseUrl, facetValues, loadThemes, workUrl, type Theme } from '../../data';
+import { sha8 } from '../../format';
+
+export const getStaticPaths = () =>
+  loadThemes().map((theme) => ({ params: { themeId: theme.id }, props: { theme } }));
+
+interface Props { theme: Theme }
+const { theme } = Astro.props;
+const { runs } = theme;
+
+const facets = {
+  harness: facetValues(runs, 'harness'),
+  model: facetValues(runs, 'model'),
+  effort: facetValues(runs, 'effort'),
+};
+const catLabel = (c: string) => (c === '3d' ? '3D' : c === 'web' ? '网页' : c);
+---
+
+<Base title={theme.meta.title}>
+  <header class="theme-head">
+    <div class="th-row">
+      <a class="back-btn" href={baseUrl('')} title="返回全部题目" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
+      <h1>{theme.meta.title}</h1>
+      <span class="meta mono">{catLabel(theme.meta.category)} · {theme.id} · {runs.length} 份答卷{theme.meta.tags.length > 0 && ` · ${theme.meta.tags.join(' / ')}`}</span>
+      {runs.length > 0 && (
+        <div class="th-actions">
+          <a class="btn btn--ghost" href={baseUrl(`${theme.id}/rank/`)}>评级榜 →</a>
+          <a class="btn btn--ghost" href={baseUrl(`${theme.id}/compare/`)}>对比答卷 →</a>
+        </div>
+      )}
+    </div>
+
+    <section class="prompt-box" aria-label="提示词">
+      <span class="box-label">提示词</span>
+      <span class="serial">编号 {sha8(theme.meta.promptSha256)}</span>
+      <pre>{theme.prompt || '（无 prompt.md）'}</pre>
+    </section>
+
+    <details class="constraints">
+      <summary>约束</summary>
+      <pre>{AGENTS_MD}</pre>
+    </details>
+  </header>
+
+  <div class="wrap page">
+
+    {runs.length > 0 ? (
+      <>
+        <div class="brow" role="radiogroup" aria-label="harness 筛选" data-filter="harness">
+          <span class="brow-label">harness</span>
+          <Bubble value="" label="全部" checked />
+          {facets.harness.map((v) => <Bubble value={v} label={v} />)}
+        </div>
+        <div class="brow" role="radiogroup" aria-label="模型筛选" data-filter="model">
+          <span class="brow-label">模型</span>
+          <Bubble value="" label="全部" checked />
+          {facets.model.map((v) => <Bubble value={v} label={v} />)}
+        </div>
+        <div class="brow" role="radiogroup" aria-label="推理强度筛选" data-filter="effort">
+          <span class="brow-label">推理强度</span>
+          <Bubble value="" label="全部" checked />
+          {facets.effort.map((v) => <Bubble value={v} label={v} />)}
+        </div>
+        <div class="brow" role="radiogroup" aria-label="状态筛选" data-filter="status">
+          <span class="brow-label">状态</span>
+          <Bubble value="" label="全部" checked />
+          <Bubble value="ok" label="正常" mono={false} />
+          <Bubble value="incomplete" label="未完成" mono={false} />
+        </div>
+
+        <div class="filter-bar">
+          <span class="count" id="count" aria-live="polite">{runs.length} / {runs.length} 份答卷</span>
+          <div class="seg" role="group" aria-label="封面尺寸" id="cover-seg">
+            <button type="button" aria-pressed="true" data-cover="desktop">桌面</button>
+            <button type="button" aria-pressed="false" data-cover="mobile">手机</button>
+          </div>
+        </div>
+
+        <div class="card-grid" id="grid">
+          {runs.map((r) => (
+            <a
+              class="card"
+              href={baseUrl(`${theme.id}/view/${r.id}/`)}
+              data-harness={r.harness}
+              data-model={r.model}
+              data-effort={r.effort}
+              data-status={r.status}
+            >
+              {r.tierId && (
+                <span
+                  class="tier-tag"
+                  style={`background:${theme.ratings.tiers.find((t) => t.id === r.tierId)?.color ?? '#d9dde3'}`}
+                >
+                  {theme.ratings.tiers.find((t) => t.id === r.tierId)?.label}
+                  <span class="rk">#{(r.rank ?? 0) + 1}</span>
+                </span>
+              )}
+              {r.status === 'incomplete' ? (
+                <div class="blank-sheet">
+                  <span class="stamp">未完成</span>
+                  {r.reasons.length > 0 && <p class="reason">{r.reasons.join('；')}</p>}
+                </div>
+              ) : r.coverDesktop ? (
+                <div class="mat">
+                  <img
+                    src={`${workUrl(theme.id, r.id)}${r.coverDesktop}`}
+                    data-cover-desktop={`${workUrl(theme.id, r.id)}${r.coverDesktop}`}
+                    data-cover-mobile={`${workUrl(theme.id, r.id)}${r.coverMobile ?? r.coverDesktop}`}
+                    alt={`${r.harness} · ${r.model} 的答卷封面`}
+                    loading="lazy"
+                    width="320"
+                    height="212"
+                  />
+                </div>
+              ) : (
+                <div class="mat"><span class="empty-note">no cover</span></div>
+              )}
+              <div class="card-meta">
+                <span>{r.harness} · {r.model} · {r.effort}</span>
+                {r.status === 'incomplete' && <span class="st-incomplete">未完成</span>}
+              </div>
+            </a>
+          ))}
+        </div>
+        <p class="empty-state" id="no-match" hidden>{'// 没有匹配的答卷 —— 换一个涂法试试。'}</p>
+      </>
+    ) : (
+      <p class="empty-state">{'// 这道题目还没有收到任何答卷。'}</p>
+    )}
+
+    <footer class="footer">
+      <span>GALLERY3D — {theme.id}</span>
+      <span>{runs.length} sheet(s)</span>
+    </footer>
+  </div>
+
+  {runs.length > 0 && (
+    <script>
+      // ---- client-side OMR filtering (vanilla, no framework) ----
+      const grid = document.getElementById('grid')!;
+      const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+      const countEl = document.getElementById('count')!;
+      const noMatch = document.getElementById('no-match')!;
+      const state: Record<string, string> = { harness: '', model: '', effort: '', status: '' };
+
+      function apply() {
+        let shown = 0;
+        for (const c of cards) {
+          const ok =
+            (!state.harness || c.dataset.harness === state.harness) &&
+            (!state.model || c.dataset.model === state.model) &&
+            (!state.effort || c.dataset.effort === state.effort) &&
+            (!state.status || c.dataset.status === state.status);
+          c.hidden = !ok;
+          if (ok) shown++;
+        }
+        countEl.innerHTML = `<b>${shown}</b> / ${cards.length} 份答卷`;
+        noMatch.hidden = shown > 0;
+      }
+
+      document.querySelectorAll<HTMLElement>('.brow[data-filter]').forEach((row) => {
+        row.addEventListener('click', (e) => {
+          const btn = (e.target as HTMLElement).closest<HTMLElement>('.bubble');
+          if (!btn) return;
+          row.querySelectorAll('.bubble').forEach((b) => b.setAttribute('aria-checked', 'false'));
+          btn.setAttribute('aria-checked', 'true');
+          state[row.dataset.filter!] = btn.dataset.value ?? '';
+          apply();
+        });
+      });
+
+      // ---- 桌面|手机 cover toggle: swaps every card thumbnail ----
+      const seg = document.getElementById('cover-seg')!;
+      seg.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-cover]');
+        if (!btn) return;
+        seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        const mode = btn.dataset.cover === 'mobile' ? 'coverMobile' : 'coverDesktop';
+        grid.querySelectorAll<HTMLImageElement>('img[data-cover-desktop]').forEach((img) => {
+          img.src = img.dataset[mode] ?? img.dataset.coverDesktop!;
+        });
+      });
+    </script>
+  )}
+</Base>

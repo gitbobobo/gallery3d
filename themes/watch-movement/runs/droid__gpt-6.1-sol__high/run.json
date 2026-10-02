@@ -1,0 +1,30 @@
+{
+  "runId": "droid__gpt-6.1-sol__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "modelArg": "gpt-6.1-sol",
+  "harnessVersion": "0.231.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T18:32:00.787Z",
+  "launchedAt": "2026-10-01T18:32:00.963Z",
+  "finishedAt": "2026-10-01T19:06:48.948Z",
+  "importedAt": "2026-10-01T19:07:04.335Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2087985,
+    "costUsd": null,
+    "tokensIn": 225521,
+    "tokensOut": 53219,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 587188
+  },
+  "notes": true
+}

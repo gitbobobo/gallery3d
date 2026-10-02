@@ -1,0 +1,27 @@
+{
+  "runId": "droid__sonnet-5.5__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "claude-sonnet-5-5",
+  "effort": "high",
+  "modelArg": "claude-sonnet-5-5",
+  "harnessVersion": "0.231.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T23:45:50.339Z",
+  "launchedAt": "2026-10-01T23:45:50.378Z",
+  "finishedAt": "2026-10-02T00:36:25.188Z",
+  "importedAt": "2026-10-02T00:36:33.571Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 3034810,
+    "costUsd": null,
+    "tokensIn": 81546,
+    "tokensOut": 199816,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 636697
+  },
+  "notes": true
+}

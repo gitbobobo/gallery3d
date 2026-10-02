@@ -1,0 +1,60 @@
+{
+  "tiers": [
+    {
+      "id": "agi",
+      "label": "AGI",
+      "color": "rgb(228, 85, 79)"
+    },
+    {
+      "id": "s-plus",
+      "label": "S+",
+      "color": "rgb(240, 160, 60)"
+    },
+    {
+      "id": "s",
+      "label": "S",
+      "color": "rgb(239, 224, 75)"
+    },
+    {
+      "id": "a",
+      "label": "A",
+      "color": "rgb(243, 234, 211)"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "color": "rgb(228, 224, 212)"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "color": "rgb(217, 221, 227)"
+    }
+  ],
+  "rows": {
+    "agi": [],
+    "s-plus": [],
+    "s": [
+      "droid__gpt-6.1-sol__high"
+    ],
+    "a": [
+      "codex__gpt-6-astra__high",
+      "droid__sonnet-5.5__high",
+      "opencode__deepseek-v4.1-flash__high"
+    ],
+    "b": [
+      "cursor__grok-4.7__high",
+      "claude-code-glm__glm-5.3-flash__xhigh",
+      "claude-code-minimax__minimax-m3__xhigh",
+      "devin__swe-2__high"
+    ],
+    "c": [
+      "droid__gemini-3.8-flash__high",
+      "droid__gpt-6-luna__high",
+      "opencode__muse-spark-1.3-contributor__high",
+      "codex__gpt-6.1-sol__high",
+      "opencode__mimo-v2.6-flash__high",
+      "opencode__mimo-v2.6-pro__high"
+    ]
+  }
+}

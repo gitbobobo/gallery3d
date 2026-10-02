@@ -1,0 +1,31 @@
+{
+  "runId": "droid__gpt-6-luna__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "modelArg": "gpt-6-luna",
+  "harnessVersion": "0.231.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T23:32:15.684Z",
+  "launchedAt": "2026-10-01T23:32:15.721Z",
+  "finishedAt": "2026-10-01T23:45:41.825Z",
+  "importedAt": "2026-10-01T23:45:49.888Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 806104,
+    "costUsd": null,
+    "tokensIn": 57722,
+    "tokensOut": 80571,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "cdn.jsdelivr.net",
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 49532
+  },
+  "notes": true
+}

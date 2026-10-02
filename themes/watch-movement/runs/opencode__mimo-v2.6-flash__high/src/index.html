@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>机械表机芯 · 3D 剖视</title>
+    <meta name="description" content="用 3D 观察一枚正在运转的机械表机芯：发条盒、传动轮系、擒纵轮、擒纵叉与摆轮按真实传动比联动。" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <canvas id="scene"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+
+      <header class="brand">
+        <div class="eyebrow">MOVEMENT&nbsp;&nbsp;·&nbsp;&nbsp;3D CUTAWAY</div>
+        <h1>机械表机芯</h1>
+        <p class="meta">手动上链 · 18 000 A/h · 实时传动比</p>
+        <p class="hint" id="hint">拖动旋转 · 滚轮缩放 · 点击零件</p>
+      </header>
+
+      <aside class="tools">
+        <div class="tool-row">
+          <span class="tool-label">速度</span>
+          <div class="seg" id="speed" role="group" aria-label="播放速度">
+            <button type="button" data-speed="0.5">0.5×</button>
+            <button type="button" data-speed="1" class="on">1×</button>
+            <button type="button" data-speed="2">2×</button>
+            <button type="button" data-speed="4">4×</button>
+          </div>
+        </div>
+        <div class="tool-row">
+          <button type="button" class="ghost" id="reset">重置视角</button>
+        </div>
+        <div class="tape">
+          <div class="tape-label">摆频轨迹 <span>TIMING TRACE</span></div>
+          <canvas id="tape" aria-hidden="true"></canvas>
+        </div>
+      </aside>
+
+      <section class="panel" id="panel">
+        <nav class="chips" id="chips" aria-label="零件"></nav>
+        <div class="detail">
+          <div class="detail-head">
+            <div class="titles">
+              <div class="p-name" id="pName">摆轮</div>
+              <div class="p-en" id="pEn">Balance Wheel</div>
+            </div>
+            <div class="p-role" id="pRole">调速机构</div>
+          </div>
+          <p class="p-desc" id="pDesc"></p>
+          <dl class="specs" id="pSpecs"></dl>
+          <p class="foot" id="pFoot">点击 3D 视图中的任意零件，或切换上方标签</p>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

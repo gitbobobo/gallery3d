@@ -1,0 +1,27 @@
+{
+  "runId": "cursor__grok-4.7__high",
+  "theme": "watch-movement",
+  "harness": "cursor",
+  "model": "grok-4.7-high",
+  "effort": "high",
+  "modelArg": "grok-4.7-high",
+  "harnessVersion": "2026.08.31-4057e58",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T17:33:46.858Z",
+  "launchedAt": "2026-10-01T17:33:47.494Z",
+  "finishedAt": "2026-10-01T18:31:34.828Z",
+  "importedAt": "2026-10-01T18:31:47.099Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 3467334,
+    "costUsd": null,
+    "tokensIn": null,
+    "tokensOut": null,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 691873
+  },
+  "notes": true
+}

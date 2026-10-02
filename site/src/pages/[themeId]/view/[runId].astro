@@ -1,0 +1,147 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { baseUrl, loadThemes, workEntry, type Run, type Theme } from '../../../data';
+import { fmtBytes, fmtCost, fmtDuration, fmtTime, fmtTokens, sha8 } from '../../../format';
+import { renderMd } from '../../../md';
+
+export const getStaticPaths = () =>
+  loadThemes().flatMap((theme) =>
+    theme.runs.map((run, i) => ({
+      params: { themeId: theme.id, runId: run.id },
+      props: {
+        theme,
+        run,
+        prev: theme.runs[i - 1] ?? null,
+        next: theme.runs[i + 1] ?? null,
+      },
+    })),
+  );
+
+interface Props { theme: Theme; run: Run; prev: Run | null; next: Run | null }
+const { theme, run, prev, next } = Astro.props;
+
+const src = workEntry(theme.id, run.id);
+const notesHtml = run.notesMd ? renderMd(run.notesMd) : '';
+
+const metaRows: [string, string, boolean?][] = [
+  ['组合 id', run.runId],
+  ['harness', run.harness],
+  ['model', run.modelArg ?? run.model],
+  ['强度', run.effort],
+  ['harness 版本', run.harnessVersion ?? '—'],
+  ['耗时', fmtDuration(run.stats.durationMs)],
+  ['token', fmtTokens(run.stats.tokensIn, run.stats.tokensOut)],
+  ['成本', fmtCost(run.stats.costUsd)],
+  ['产物大小', fmtBytes(run.stats.distBytes)],
+  ['控制台错误', run.stats.consoleErrors === undefined ? '—' : String(run.stats.consoleErrors), (run.stats.consoleErrors ?? 0) > 0],
+  ...(run.stats.externalDomains?.length
+    ? ([['外部域名', run.stats.externalDomains.join(', '), true]] as [string, string, boolean][])
+    : []),
+  ['时间', fmtTime(run.finishedAt ?? run.importedAt)],
+  ['状态', run.status === 'ok' ? '正常' : '未完成', run.status !== 'ok'],
+  ...(run.status !== 'ok' && run.reasons.length
+    ? ([['原因', run.reasons.join('；'), true]] as [string, string, boolean][])
+    : []),
+  ...(run.promptSha256 ? ([['提示词编号', sha8(run.promptSha256)]] as [string, string][]) : []),
+];
+---
+
+<Base title={`${theme.meta.title} · ${run.id}`}>
+  <div class="viewer">
+    <header class="vbar">
+      <a class="back-btn" href={baseUrl(`${theme.id}/`)} title="返回 {theme.meta.title}" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
+      <div class="vtitle">
+        <h1>{run.harness} × {run.model}</h1>
+        {run.status !== 'ok' && <span class="stamp">未完成</span>}
+      </div>
+      <div class="vtools">
+        {prev ? (
+          <a class="vbtn" href={baseUrl(`${theme.id}/view/${prev.id}/`)} title={prev.id}>←</a>
+        ) : (
+          <span class="vbtn" aria-disabled="true">←</span>
+        )}
+        {next ? (
+          <a class="vbtn" href={baseUrl(`${theme.id}/view/${next.id}/`)} title={next.id}>→</a>
+        ) : (
+          <span class="vbtn" aria-disabled="true">→</span>
+        )}
+        {run.hasDist && (
+          <div class="seg" role="group" aria-label="预览尺寸" id="size-seg">
+            <button type="button" aria-pressed="true" data-size="desktop">桌面</button>
+            <button type="button" aria-pressed="false" data-size="mobile">手机</button>
+          </div>
+        )}
+        <button class="vbtn" type="button" id="info-btn" aria-expanded="false">信息</button>
+        <a class="vbtn" href={baseUrl(`${theme.id}/compare/?a=${run.id}`)}>对比</a>
+        {run.hasDist && (
+          <a class="vbtn" href={src} target="_blank" rel="noreferrer" title="在新标签页打开">↗</a>
+        )}
+      </div>
+    </header>
+
+    <div class="stage" id="stage">
+      {run.hasDist ? (
+        <iframe
+          src={src}
+          title={`${theme.meta.title} — ${run.harness} · ${run.model} 的答卷`}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
+          allow="fullscreen"
+        ></iframe>
+      ) : (
+        <div class="no-dist">
+          {'// 这份答卷没有提交产物 —— 空白卷。'}
+          {run.reasons.length > 0 && <p>{run.reasons.join('；')}</p>}
+        </div>
+      )}
+      {run.status !== 'ok' && run.hasDist && (
+        <div class="stage-flag mono" title={run.reasons.join('；')}>
+          未完成{run.reasons.length ? ` · ${run.reasons.join('；')}` : ''}
+        </div>
+      )}
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <aside class="drawer" id="drawer" aria-label="答题信息">
+      <div class="drawer-head">
+        <span class="mono">答卷信息</span>
+        <button class="vbtn" type="button" id="drawer-close">✕</button>
+      </div>
+      <dl class="meta-list">
+        {metaRows.map(([k, v, warn]) => (
+          <div><dt>{k}</dt><dd class:list={[{ warn }]}>{v}</dd></div>
+        ))}
+      </dl>
+      {notesHtml && (
+        <>
+          <h2 class="drawer-sub">备注</h2>
+          <div class="notes" set:html={notesHtml} />
+        </>
+      )}
+      <p class="drawer-foot mono">GALLERY3D — {theme.id} / {run.id}</p>
+    </aside>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage')!;
+    document.getElementById('size-seg')?.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-size]');
+      if (!btn) return;
+      document.querySelectorAll('#size-seg button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      stage.classList.toggle('stage-mobile', btn.dataset.size === 'mobile');
+    });
+
+    const drawer = document.getElementById('drawer')!;
+    const scrim = document.getElementById('scrim')!;
+    const infoBtn = document.getElementById('info-btn')!;
+    const setOpen = (open: boolean) => {
+      drawer.classList.toggle('open', open);
+      scrim.classList.toggle('open', open);
+      infoBtn.setAttribute('aria-expanded', String(open));
+    };
+    infoBtn.addEventListener('click', () => setOpen(!drawer.classList.contains('open')));
+    document.getElementById('drawer-close')!.addEventListener('click', () => setOpen(false));
+    scrim.addEventListener('click', () => setOpen(false));
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  </script>
+</Base>

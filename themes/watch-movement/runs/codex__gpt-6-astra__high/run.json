@@ -1,0 +1,30 @@
+{
+  "runId": "codex__gpt-6-astra__high",
+  "theme": "watch-movement",
+  "harness": "codex",
+  "model": "gpt-6-astra",
+  "effort": "high",
+  "modelArg": "gpt-6-astra",
+  "harnessVersion": "codex-cli 0.159.2",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T23:46:34.860Z",
+  "launchedAt": "2026-10-01T23:46:34.894Z",
+  "finishedAt": "2026-10-02T00:01:20.299Z",
+  "importedAt": "2026-10-02T00:01:34.456Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 885405,
+    "costUsd": null,
+    "tokensIn": 762978,
+    "tokensOut": 28929,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 551293
+  },
+  "notes": true
+}

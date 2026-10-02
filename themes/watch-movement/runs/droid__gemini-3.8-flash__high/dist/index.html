@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CALIBRE 1800 · 机械表机芯 3D 全景解构</title>
+    <script type="module" crossorigin src="./assets/index-BpemB8UM.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-CjO1km6C.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- 3D WebGL Canvas Container -->
+      <div id="canvas-container"></div>
+
+      <!-- Hover Tooltip -->
+      <div id="hover-tooltip" class="hover-tooltip"></div>
+
+      <!-- UI Layer Overlay -->
+      <div class="ui-layer">
+        <!-- Top Navigation Bar -->
+        <header class="top-bar glass-panel interactive">
+          <div class="brand-section">
+            <div class="brand-logo">18</div>
+            <div class="brand-titles">
+              <h1>
+                CALIBRE 1800
+                <span class="brand-badge">HAUTE HORLOGERIE</span>
+              </h1>
+              <p>瑞士杠杆式擒纵系统 · 真实机械齿轮传动比</p>
+            </div>
+          </div>
+
+          <div class="top-controls">
+            <!-- Beat frequency status badge -->
+            <div class="status-tag">
+              <span class="status-dot"></span>
+              <span id="vph-display">18,000 VPH · 2.5Hz</span>
+            </div>
+
+            <!-- Speed selector -->
+            <div class="speed-selector" title="运转速率">
+              <button class="speed-btn" data-speed="0.2">0.2x</button>
+              <button class="speed-btn" data-speed="0.5">0.5x</button>
+              <button class="speed-btn active" data-speed="1.0">1.0x</button>
+              <button class="speed-btn" data-speed="2.0">2.0x</button>
+            </div>
+
+            <!-- Audio toggle button -->
+            <button id="btn-sound" class="btn-icon" title="滴答声效 (Web Audio)" aria-label="Toggle Sound">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+            </button>
+
+            <!-- Play / Pause button -->
+            <button id="btn-play-pause" class="btn-icon" title="播放 / 暂停" aria-label="Play/Pause">
+              <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+              </svg>
+              <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Bottom Controls & Hints Container -->
+        <div class="bottom-group">
+          <!-- Bottom Controls Bar -->
+          <div class="bottom-controls-bar">
+            <div class="control-pill glass-panel interactive">
+              <!-- Exploded view slider -->
+              <div class="control-item">
+                <label for="explode-slider">结构分解</label>
+                <div class="slider-wrap">
+                  <input id="explode-slider" type="range" min="0" max="1" step="0.01" value="0" />
+                  <span id="explode-val" style="font-family: var(--font-mono); font-size: 11px; width: 28px;">0%</span>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Bridges transparency toggle -->
+              <div class="control-item">
+                <label>夹板</label>
+                <div class="view-presets">
+                  <button class="preset-btn active" data-bridge="1.0">实体</button>
+                  <button class="preset-btn" data-bridge="0.32">透视</button>
+                  <button class="preset-btn" data-bridge="0.0">隐藏</button>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Camera preset angles -->
+              <div class="control-item">
+                <label>视角</label>
+                <div class="view-presets">
+                  <button class="preset-btn active" data-view="classic">经典45°</button>
+                  <button class="preset-btn" data-view="top">俯视</button>
+                  <button class="preset-btn" data-view="escapement">擒纵</button>
+                  <button class="preset-btn" data-view="balance">摆轮</button>
+                  <button class="preset-btn" data-view="train">轮系</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hint text -->
+          <div class="hint-text">
+            拖动旋转 · 滚轮缩放 · 双指平移 · 点击零件查看机械解构
+          </div>
+        </div>
+      </div>
+
+      <!-- Component Knowledge Card (Floating Side Panel) -->
+      <aside id="info-card" class="info-card glass-panel interactive hidden" aria-live="polite">
+        <div class="info-header">
+          <div>
+            <div id="card-category" class="info-category">调速机构</div>
+            <h2 id="card-title" class="info-title">摆轮系统</h2>
+            <div id="card-en-title" class="info-en-title">Balance Wheel Assembly</div>
+          </div>
+          <button id="card-close-btn" class="close-btn" aria-label="关闭信息卡片">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div id="card-summary" class="info-summary">
+          机械腕表的“物理时间守护者”，利用简谐振动的等时性原理，决定了腕表走时的绝对精准度。
+        </div>
+
+        <div>
+          <div class="info-section-title">核心规格与参数</div>
+          <div id="card-specs" class="specs-grid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div>
+          <div class="info-section-title">机械运作原理</div>
+          <p id="card-principle" class="info-principle">
+            类似于单摆，摆轮拥有恒定的转动惯量。在游丝弹性恢复力矩的作用下，摆轮以固有角频率进行规律的往复旋转。
+          </p>
+        </div>
+
+        <div>
+          <div class="info-section-title">工艺与结构精髓</div>
+          <ul id="card-highlights" class="info-highlights">
+            <!-- Dynamically populated -->
+          </ul>
+        </div>
+
+        <div class="card-actions">
+          <button id="btn-focus-part" class="btn-action">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            镜头特写
+          </button>
+        </div>
+      </aside>
+    </div>
+
+  </body>
+</html>

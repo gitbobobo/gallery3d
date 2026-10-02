@@ -1,0 +1,29 @@
+---
+// OMR "bubble" selector option: hollow red ellipse + label; selected state
+// paints an irregular pencil-scribble fill (SVG turbulence displacement,
+// animated ~150ms via CSS, instant under prefers-reduced-motion).
+interface Props {
+  value: string;
+  label: string;
+  checked?: boolean;
+  mono?: boolean;
+}
+const { value, label, checked = false, mono = true } = Astro.props;
+---
+
+<button
+  type="button"
+  class="bubble"
+  role="radio"
+  aria-checked={checked ? 'true' : 'false'}
+  data-value={value}
+>
+  <svg class="bub" viewBox="0 0 46 30" aria-hidden="true">
+    <ellipse class="bub-ring" cx="23" cy="15" rx="20.5" ry="12.5" />
+    <g filter="url(#scribble)">
+      <ellipse class="bub-fill" cx="23" cy="15" rx="14" ry="7.6" />
+      <ellipse class="bub-fill2" cx="23" cy="15" rx="15.5" ry="8.8" />
+    </g>
+  </svg>
+  <span class:list={['blabel', { mono }]}>{label}</span>
+</button>

@@ -1,0 +1,30 @@
+{
+  "runId": "codex__gpt-6.1-sol__high",
+  "theme": "watch-movement",
+  "harness": "codex",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "modelArg": "gpt-6.1-sol",
+  "harnessVersion": "codex-cli 0.159.2",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-01T23:32:15.684Z",
+  "launchedAt": "2026-10-01T23:32:15.778Z",
+  "finishedAt": "2026-10-01T23:46:26.137Z",
+  "importedAt": "2026-10-01T23:46:34.442Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 850359,
+    "costUsd": null,
+    "tokensIn": 3046387,
+    "tokensOut": 17676,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 547096
+  },
+  "notes": true
+}

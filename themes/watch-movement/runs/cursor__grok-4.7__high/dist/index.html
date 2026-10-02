@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Cal. 18000</title>
+    <script type="module" crossorigin src="./assets/index-Bz8y4Th8.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C_M1-GTC.css">
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="view" tabindex="0" aria-label="机械表机芯，可拖动旋转"></canvas>
+      <div class="veil" aria-hidden="true"></div>
+      <header class="hud">
+        <p class="mark">Cal. 18000</p>
+        <p class="sub">杠杆擒纵 · 每小时 18,000 次</p>
+        <div class="tools">
+          <div class="speeds" role="group" aria-label="转速">
+            <button type="button" data-speed="1" aria-pressed="true">×1</button>
+            <button type="button" data-speed="15" aria-pressed="false">×15</button>
+            <button type="button" data-speed="60" aria-pressed="false">×60</button>
+          </div>
+          <button type="button" id="reset">复位</button>
+        </div>
+      </header>
+      <p id="hint">拖动旋转，滚轮或双指缩放。点零件，或按 1 到 8。</p>
+      <article id="card" hidden>
+        <button type="button" id="close">关闭</button>
+        <h2 id="card-title"></h2>
+        <p id="card-text"></p>
+        <p id="card-live"></p>
+      </article>
+      <p id="fail" hidden>这个浏览器没能打开三维画面。</p>
+    </div>
+  </body>
+</html>

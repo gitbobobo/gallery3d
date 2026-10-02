@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b171c" />
+  <title>Calibre 01 · 时间的内部</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23d5b477' stroke-width='3'/%3E%3Cpath d='M16 6v10l7 4' fill='none' stroke='%23d5b477' stroke-width='2'/%3E%3C/svg%3E" />
+  <script type="module" crossorigin src="./assets/index-lMlCPI25.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-V6twcr-9.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="scene" tabindex="0" aria-label="机械表机芯。拖动旋转，滚轮缩放。也可使用右侧零件按钮选择，方向键旋转，加减号缩放。"></canvas>
+  <header class="header">
+    <a class="wordmark" href="#" aria-label="Calibre 01 首页"><span class="brand-icon">◷</span> ATELIER <span class="brand-thin">/ 机芯研究室</span></a>
+    <div class="edition">INTERACTIVE COLLECTION <span>NO. 001</span></div>
+    <button class="text-button" id="principleBtn">传动原理 <span>↗</span></button>
+  </header>
+  <section class="intro">
+    <div class="eyebrow"><i></i> THE ANATOMY OF TIME</div>
+    <h1>时间的内部<span>Calibre 01</span></h1>
+    <p>每一次滴答，都有迹可循。</p>
+  </section>
+  <div class="stage-mark top-mark">手动上链机械机芯 <span>·</span> 开放式结构</div>
+  <div class="stage-label" id="stageLabel"><span>01</span><b>发条盒</b><i></i></div>
+  <div class="view-tools" aria-label="视角工具">
+    <button id="viewAngle" class="icon-button active" title="立体视角" aria-label="立体视角"><svg viewBox="0 0 24 24"><path d="m12 3 8 5v9l-8 4-8-4V8Z M4 8l8 5 8-5 M12 13v8"/></svg></button>
+    <button id="viewTop" class="icon-button" title="俯视结构" aria-label="俯视结构"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button>
+    <span></span>
+    <button id="resetView" class="icon-button" title="重置视角" aria-label="重置视角"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button>
+  </div>
+  <aside class="inspector">
+    <div class="panel-top"><span>机芯解构</span><span class="small-mono">EXPLORE THE MOVEMENT</span></div>
+    <div class="parts-nav" id="partsNav" aria-label="选择机芯零件"></div>
+    <div class="part-detail">
+      <div class="part-id"><span id="partIndex">01 / 07</span><span id="partEnglish">MAINSPRING BARREL</span></div>
+      <h2 id="partName">发条盒</h2>
+      <p id="partDesc">上链时，盘绕的发条储存能量；释放时推动发条盒外缘的齿轮，将扭矩送入整个传动轮系。</p>
+      <div class="part-stats"><div><span id="statLabel1">齿数</span><strong id="statValue1">80 <small>齿</small></strong></div><div><span id="statLabel2">转动周期</span><strong id="statValue2">8 <small>小时 / 圈</small></strong></div></div>
+      <div class="energy-note"><i></i><span id="partNote">动力的起点 · 驱动中心轮的 10 齿小齿轴</span></div>
+    </div>
+    <div class="frequency"><div><span class="live-dot"></span><span id="runLabel">机芯运转中</span></div><b>18,000 <small>A/h</small></b></div>
+    <div class="wave-wrap"><svg id="beatWave" viewBox="0 0 270 32" preserveAspectRatio="none"><path class="wave-baseline" d="M0 16H270"/><path class="wave" d="M0 16h10l3-2 3 2h7l3-9 3 21 3-12h26l3-2 3 2h7l3-9 3 21 3-12h26l3-2 3 2h7l3-9 3 21 3-12h26l3-2 3 2h7l3-9 3 21 3-12h26l3-2 3 2h7l3-9 3 21 3-12h26"/></svg></div>
+    <div class="panel-foot"><span>2.5 Hz 摆频</span><span>±270° 摆幅</span></div>
+  </aside>
+  <footer class="footer">
+    <div class="playback"><button id="playPause" class="play-button" aria-label="暂停运转" title="暂停运转"><svg viewBox="0 0 20 20" id="playIcon"><path d="M7 5v10M13 5v10"/></svg></button><span class="play-divider"></span><span class="speed-title">时间倍率</span><div class="speed-options" aria-label="时间倍率"><button data-speed="0.2">0.2×</button><button class="selected" data-speed="1" aria-pressed="true">1×</button><button data-speed="10">10×</button></div></div>
+    <div class="instruction"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg><span>拖动旋转 <i>·</i> 滚轮缩放 <i>·</i> 点击探索</span></div>
+    <div class="live-time"><span>SIMULATION TIME</span><b id="elapsed">00:00.0</b></div>
+  </footer>
+  <div class="loading" id="loading"><div></div><span>正在装配机芯</span></div>
+</div>
+<dialog id="principleDialog">
+  <div class="dialog-head"><span>THE GEAR TRAIN</span><button id="closeDialog" aria-label="关闭传动原理">×</button></div>
+  <h2>能量如何变成时间</h2><p>大齿轮驱动下一根轴上的小齿轴，同一根轴上的大齿轮继续传递动力。每一次外啮合，转向相反。</p>
+  <div class="ratio-table"><div><span>驱动轮 → 从动小齿轴</span><span>齿数比</span><span>从动轴周期</span></div><div><b>发条盒 → 中心轮</b><span>80 : 10</span><span>1 小时</span></div><div><b>中心轮 → 第三轮</b><span>80 : 10</span><span>7.5 分钟</span></div><div><b>第三轮 → 第四轮</b><span>75 : 10</span><span>1 分钟</span></div><div><b>第四轮 → 擒纵轮</b><span>80 : 8</span><span>6 秒</span></div></div>
+  <p class="formula">15 齿 × 2 次释放 × 10 圈/分 × 60 分<br><strong>= 18,000 次半摆 / 小时</strong></p>
+  <p class="dialog-note">默认按真实时间运行，0.2× 便于观察擒纵动作，10× 便于观察轮系。所有零件使用同一个模拟时钟，齿数比保持不变。结构为教学模型，齿轮按节圆和齿相配合，擒纵动作以运动学方式演示。</p>
+</dialog>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>机械表机芯 · 3D</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <header id="titlebar">
+        <div class="brand">
+          <span class="mark"></span>
+          <div>
+            <h1>机械表机芯</h1>
+            <p>MECHANICAL MOVEMENT · 3D</p>
+          </div>
+        </div>
+        <div id="specs">
+          <span>摆轮 <b>1 Hz</b></span>
+          <span>擒纵轮 <b>15 齿</b></span>
+          <span>传动比 <b>1 : 4320</b></span>
+        </div>
+      </header>
+
+      <div id="hint">拖动旋转 · 滚轮 / 双指缩放 · 点击零件查看说明</div>
+
+      <div id="legend"></div>
+
+      <div id="panel" class="hidden">
+        <button id="panel-close" aria-label="关闭">×</button>
+        <div class="panel-index" id="panel-index">01</div>
+        <h2 id="panel-name">零件</h2>
+        <div id="panel-en">PART</div>
+        <div id="panel-spec"></div>
+        <p id="panel-desc"></p>
+      </div>
+
+      <div id="speed">
+        <label for="speed-range">时间倍速</label>
+        <input id="speed-range" type="range" min="0.5" max="40" step="0.5" value="4" />
+        <span id="speed-val">×4.0</span>
+      </div>
+
+      <div id="loading"><div class="spinner"></div><span>正在装配机芯…</span></div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
