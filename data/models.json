@@ -3,7 +3,7 @@
     {
       "id": "glm-5.3-flash",
       "display": "GLM 5.3 Flash",
-      "perHarness": { "claude-code-glm": null }
+      "perHarness": { "claude-code-glm": null, "droid": "glm-5.3-flash" }
     },
     {
       "id": "minimax-m3",
@@ -18,7 +18,7 @@
     {
       "id": "grok-4.7",
       "display": "Grok 4.7",
-      "perHarness": { "cursor": "grok-4.7-high" }
+      "perHarness": { "cursor": "grok-4.7-high", "droid": "grok-4.7", "opencode": "opencode-go/grok-4.7" }
     },
     {
       "id": "swe-2",
@@ -38,12 +38,17 @@
     {
       "id": "gpt-6-luna",
       "display": "GPT-6 Luna",
-      "perHarness": { "droid": "gpt-6-luna" }
+      "perHarness": { "droid": "gpt-6-luna", "opencode": "opencode-go/gpt-6-luna" }
     },
     {
       "id": "sonnet-5.5",
       "display": "Sonnet 5.5",
       "perHarness": { "droid": "claude-sonnet-5-5" }
+    },
+    {
+      "id": "opus-5.5",
+      "display": "Opus 5.5",
+      "perHarness": { "droid": "claude-opus-5-5" }
     },
     {
       "id": "gemini-3.8-flash",
@@ -64,6 +69,21 @@
       "id": "mimo-v2.6-pro",
       "display": "MiMo V2.6 Pro",
       "perHarness": { "opencode": "opencode-go/mimo-v2.6-pro" }
+    },
+    {
+      "id": "qwen-3.8-flash",
+      "display": "Qwen 3.8 Flash",
+      "perHarness": { "opencode": "opencode-go/qwen3.8-flash" }
+    },
+    {
+      "id": "qwen-3.8-max",
+      "display": "Qwen 3.8 Max",
+      "perHarness": { "opencode": "opencode-go/qwen3.8-max" }
+    },
+    {
+      "id": "kimi-k3",
+      "display": "Kimi K3",
+      "perHarness": { "opencode": "opencode-go/kimi-k3" }
     }
   ]
 }
