@@ -32,7 +32,7 @@ const runsJson = runs.map((r) => ({
 const defA = runs[0];
 const defB = runs[1];
 const optLabel = (r: (typeof runs)[number]) =>
-  `${r.place !== undefined ? `#${r.place} ` : ''}${r.modelName} · ${r.harnessName} · ${r.effort}${r.status !== 'ok' ? '（没有交卷）' : ''}`;
+  `${r.place !== undefined ? `#${r.place} ` : ''}${r.modelName} · ${r.harnessName} · ${r.effort}${!r.hasDist ? '（没有交卷）' : r.status !== 'ok' ? '（未完成）' : ''}`;
 const iframeAttrs = {
   sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock',
   allow: 'fullscreen',

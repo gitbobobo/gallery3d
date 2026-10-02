@@ -14,7 +14,9 @@ interface Props { theme: Theme }
 const { theme } = Astro.props;
 const { tiers, rows } = theme.ratings;
 
-const placed = new Set(Object.values(rows).flat());
+// 只汇总仍存在 tiers 的等级行：ratings.json 里已删等级残留的 runId
+// 不能算"已评级"，否则那些答卷既进不了等级行也进不了未评级池
+const placed = new Set(tiers.flatMap((t) => rows[t.id] ?? []));
 const pool = theme.runs.filter((r) => !placed.has(r.id));
 const cardLabel = (r: Theme['runs'][number]) => `${r.modelName} · ${r.harnessName}`;
 const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
@@ -56,7 +58,7 @@ const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
                     data-href={baseUrl(`${theme.id}/view/${r.id}/`)}
                     style={img ? `background-image:url(${workUrl(theme.id, r.id)}${img})` : undefined}
                   >
-                    {!img && <span class="tcard-blank">没有交卷</span>}
+                    {!img && <span class="tcard-blank">{r.hasDist ? '没有封面' : '没有交卷'}</span>}
                     {r.hasDist && (
                       <a class="tcard-zoom" href={`#z-${r.id}`} aria-label="预览效果" title="预览效果">
                         <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">

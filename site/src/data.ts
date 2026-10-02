@@ -405,7 +405,10 @@ export const facetValues = (
 
 export interface ThemeSummary {
   total: number;
+  /** status=incomplete；可能有产物（探测失败、提前停止等），不等于没交卷 */
   incomplete: number;
+  /** 没有 dist 产物，即"没交" */
+  noDist: number;
   harnesses: number;
   models: number;
   minMs?: number;
@@ -416,10 +419,11 @@ export interface ThemeSummary {
 export const themeSummary = (theme: Theme): ThemeSummary => {
   const durations = theme.runs
     .map((r) => r.stats.durationMs)
-    .filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+    .filter((n): n is number => Number.isFinite(n));
   return {
     total: theme.runs.length,
     incomplete: theme.runs.filter((r) => r.status === 'incomplete').length,
+    noDist: theme.runs.filter((r) => !r.hasDist).length,
     harnesses: new Set(theme.runs.map((r) => r.harness)).size,
     models: new Set(theme.runs.map((r) => r.modelKey)).size,
     minMs: durations.length ? Math.min(...durations) : undefined,
