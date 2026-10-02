@@ -1,0 +1,27 @@
+{
+  "runId": "droid__glm-5.3-flash__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "glm-5.3-flash",
+  "effort": "high",
+  "modelArg": "glm-5.3-flash",
+  "harnessVersion": "0.232.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T07:51:24.849Z",
+  "launchedAt": "2026-10-02T07:51:25.054Z",
+  "finishedAt": "2026-10-02T08:04:10.311Z",
+  "importedAt": "2026-10-02T08:04:20.727Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 765257,
+    "costUsd": null,
+    "tokensIn": 249846,
+    "tokensOut": 59826,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 537153
+  },
+  "notes": true
+}

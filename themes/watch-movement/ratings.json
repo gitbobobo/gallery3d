@@ -33,14 +33,17 @@
   ],
   "rows": {
     "agi": [],
-    "s-plus": [],
+    "s-plus": [
+      "droid__opus-5.5__high"
+    ],
     "s": [
-      "droid__gpt-6.1-sol__high"
+      "droid__gpt-6.1-sol__high",
+      "droid__sonnet-5.5__high"
     ],
     "a": [
       "codex__gpt-6-astra__high",
-      "droid__sonnet-5.5__high",
-      "opencode__deepseek-v4.1-flash__high"
+      "opencode__deepseek-v4.1-flash__high",
+      "droid__glm-5.3-flash__high"
     ],
     "b": [
       "cursor__grok-4.7__high",
@@ -49,7 +52,11 @@
       "devin__swe-2__high"
     ],
     "c": [
+      "opencode__grok-4.7__high",
+      "opencode__qwen-3.8-flash__high",
+      "droid__grok-4.7__high",
       "droid__gemini-3.8-flash__high",
+      "opencode__gpt-6-luna__high",
       "droid__gpt-6-luna__high",
       "opencode__muse-spark-1.3-contributor__high",
       "codex__gpt-6.1-sol__high",

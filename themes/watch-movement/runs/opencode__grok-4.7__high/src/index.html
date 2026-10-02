@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>B18 机芯</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,520&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="view"></div>
+    <header>
+      <div class="brand">
+        <h1>B18</h1>
+        <p>手动上条 · 杠杆擒纵 · 15 钻</p>
+      </div>
+      <div class="rate">
+        <span class="pip" id="pip"></span>
+        <span class="num">18 000</span>
+        <span class="unit">次/时</span>
+      </div>
+    </header>
+    <footer>
+      <div class="bar">
+        <p class="hint" id="hint">拖动旋转，滚轮缩放，点零件</p>
+        <div class="speeds" role="group" aria-label="走时速度">
+          <button type="button" data-speed="1" class="on" aria-pressed="true">真实</button>
+          <button type="button" data-speed="8" aria-pressed="false">加快</button>
+        </div>
+      </div>
+      <article id="note" hidden aria-live="polite">
+        <h2 id="note-title"></h2>
+        <p id="note-text"></p>
+        <span class="spec" id="note-spec"></span>
+      </article>
+    </footer>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>机械表机芯 · 3D 运转演示</title>
+  <script type="module" crossorigin src="./assets/index-p5bujASp.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B-GxZTVp.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <header class="title">
+    <h1>机械表机芯</h1>
+    <p>瑞士杠杆式擒纵 · 21600 次/小时（3 Hz）</p>
+  </header>
+
+  <div class="hover-label" id="hoverLabel"></div>
+
+  <aside class="info" id="info" hidden>
+    <button class="close" id="infoClose" aria-label="关闭">×</button>
+    <div class="info-kicker" id="infoKicker"></div>
+    <h2 id="infoName"></h2>
+    <p id="infoDesc"></p>
+    <dl id="infoSpecs"></dl>
+  </aside>
+
+  <section class="train" id="train">
+    <button class="train-toggle" id="trainToggle">传动比</button>
+    <div class="train-body" id="trainBody"></div>
+  </section>
+
+  <nav class="controls">
+    <div class="speed" id="speed"></div>
+    <div class="row">
+      <button id="pauseBtn">暂停</button>
+      <button id="resetBtn">复位视角</button>
+    </div>
+  </nav>
+
+  <div class="hint" id="hint">拖动旋转 · 滚轮/双指缩放 · 点击零件查看说明</div>
+
+</body>
+</html>

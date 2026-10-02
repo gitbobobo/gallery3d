@@ -1,0 +1,27 @@
+{
+  "runId": "droid__grok-4.7__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "grok-4.7",
+  "effort": "high",
+  "modelArg": "grok-4.7",
+  "harnessVersion": "0.232.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T07:51:24.849Z",
+  "launchedAt": "2026-10-02T07:51:25.054Z",
+  "finishedAt": "2026-10-02T08:29:50.415Z",
+  "importedAt": "2026-10-02T08:29:58.419Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2305361,
+    "costUsd": null,
+    "tokensIn": 692235,
+    "tokensOut": 88601,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 545491
+  },
+  "notes": true
+}

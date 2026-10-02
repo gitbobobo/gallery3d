@@ -1,0 +1,27 @@
+{
+  "runId": "droid__opus-5.5__high",
+  "theme": "watch-movement",
+  "harness": "droid",
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "modelArg": "claude-opus-5-5",
+  "harnessVersion": "0.232.0",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T07:51:24.849Z",
+  "launchedAt": "2026-10-02T07:51:25.054Z",
+  "finishedAt": "2026-10-02T09:41:26.362Z",
+  "importedAt": "2026-10-02T09:41:36.036Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 6601308,
+    "costUsd": null,
+    "tokensIn": 132942,
+    "tokensOut": 152356,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 628745
+  },
+  "notes": true
+}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#dce5df" />
+    <title>擒纵之间 · 机械机芯观察台</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="wordmark" href="#" aria-label="擒纵之间首页">
+          <span class="wordmark-mark" aria-hidden="true">✳</span>
+          <span class="wordmark-name">擒纵之间</span>
+          <span class="wordmark-divider"></span>
+          <span class="wordmark-sub">机械机芯观察台</span>
+        </a>
+        <div class="topbar-right">
+          <span class="live-indicator"><i></i> 实时运转</span>
+          <span class="edition">HOROLOGY STUDY <span>№ 01</span></span>
+        </div>
+      </header>
+
+      <main class="workbench">
+        <section class="viewport-panel" aria-label="可交互的机械机芯 3D 展示">
+          <div id="scene" class="scene"></div>
+          <div class="scene-heading">
+            <div class="scene-eyebrow"><span>手动上链 · 瑞士杠杆式擒纵</span><span class="eyebrow-rule"></span></div>
+            <h1>一枚机芯，<em>一场接力。</em></h1>
+            <p>能量从发条盒出发，经轮系传至擒纵；每一齿，都在为时间计数。</p>
+          </div>
+          <div class="scene-scale" aria-hidden="true"><span>自动校准视角</span><span class="scale-dash"></span><span>俯视机芯</span></div>
+          <div class="canvas-hint"><span class="hint-pointer">↗</span><span>拖动旋转 <b>·</b> 滚轮缩放</span></div>
+          <div class="scene-index" aria-hidden="true"><span>动力路径</span><span>发条盒　→　轮系　→　擒纵</span></div>
+          <div class="mobile-part-indicator"><span class="indicator-dot"></span><span id="mobile-selected-name">发条盒</span><span>已选零件</span></div>
+        </section>
+
+        <aside class="inspector" aria-live="polite">
+          <div class="inspector-head">
+            <span class="section-overline">零件档案 <span id="part-number">01 / 07</span></span>
+            <span class="archive-stamp">机芯剖读</span>
+          </div>
+          <div class="part-title-wrap">
+            <span class="part-category" id="part-category">动力源 · BARREL</span>
+            <h2 id="part-name">发条盒</h2>
+            <p class="part-english" id="part-english">The mainspring barrel</p>
+          </div>
+          <div class="part-rule"><i></i><span>结构与作用</span></div>
+          <p class="part-description" id="part-description">发条储存上链时注入的能量。缓慢释放时，带动盒缘大齿轮，为整列轮系提供稳定动力。</p>
+          <div class="detail-specs">
+            <div class="spec-row"><span>本轮齿数</span><strong id="spec-teeth">90 齿</strong></div>
+            <div class="spec-row"><span>传动关系</span><strong id="spec-ratio">9 : 1</strong></div>
+            <div class="spec-row"><span>转动方向</span><strong id="spec-direction">顺时针</strong></div>
+          </div>
+          <div class="part-sequence">
+            <div class="sequence-label"><span>传动路径</span><span>点击零件查看</span></div>
+            <div id="part-list" class="part-list"></div>
+          </div>
+          <div class="inspector-foot"><span>机芯原理示意</span><span>SWISS LEVER · 4 HZ</span></div>
+        </aside>
+      </main>
+
+      <footer class="controlbar">
+        <div class="run-state"><span class="pulse-dot"></span><span id="run-label">机芯运转中</span><span class="state-separator"></span><span>摆频 <b>4 Hz</b></span><span class="state-separator"></span><span>振动 <b>28,800 次 / 时</b></span></div>
+        <div class="playback-controls" aria-label="运转控制">
+          <button class="control-button pause-button" id="pause-button" aria-label="暂停机芯" title="暂停机芯"><span class="pause-symbol">Ⅱ</span><span>暂停</span></button>
+          <span class="control-divider"></span>
+          <button class="icon-button" id="reset-button" aria-label="重置视角" title="重置视角"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7.2A6.5 6.5 0 1 1 3.8 11M4 3.5v4h4"/></svg></button>
+          <span class="zoom-label">视角</span>
+          <button class="icon-button zoom-button" data-zoom="in" aria-label="放大" title="放大"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg></button>
+          <button class="icon-button zoom-button" data-zoom="out" aria-label="缩小" title="缩小"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12"/></svg></button>
+        </div>
+        <span class="footer-mark">✳ <span>TIME, IN MOTION</span></span>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

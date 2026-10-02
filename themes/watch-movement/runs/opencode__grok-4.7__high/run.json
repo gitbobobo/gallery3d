@@ -1,0 +1,30 @@
+{
+  "runId": "opencode__grok-4.7__high",
+  "theme": "watch-movement",
+  "harness": "opencode",
+  "model": "opencode-go/grok-4.7",
+  "effort": "high",
+  "modelArg": "opencode-go/grok-4.7",
+  "harnessVersion": "1.18.34",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T10:21:10.591Z",
+  "launchedAt": "2026-10-02T10:21:11.273Z",
+  "finishedAt": null,
+  "importedAt": "2026-10-02T13:33:04.632Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": null,
+    "costUsd": 2.4594980000000004,
+    "tokensIn": 214436,
+    "tokensOut": 146139,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 555377
+  },
+  "notes": true
+}

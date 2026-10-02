@@ -1,0 +1,30 @@
+{
+  "runId": "opencode__gpt-6-luna__high",
+  "theme": "watch-movement",
+  "harness": "opencode",
+  "model": "opencode-go/gpt-6-luna",
+  "effort": "high",
+  "modelArg": "opencode-go/gpt-6-luna",
+  "harnessVersion": "1.18.34",
+  "manual": false,
+  "promptSha256": "0267d55f7c8d1961b2dcaaf253010bed21be5f5b9f3868387af2a1f415d89ba1",
+  "preparedAt": "2026-10-02T10:30:46.253Z",
+  "launchedAt": "2026-10-02T10:30:46.545Z",
+  "finishedAt": "2026-10-02T10:40:19.033Z",
+  "importedAt": "2026-10-02T10:40:29.176Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 572488,
+    "costUsd": 0.040851685000000006,
+    "tokensIn": 65507,
+    "tokensOut": 49666,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 572799
+  },
+  "notes": true
+}

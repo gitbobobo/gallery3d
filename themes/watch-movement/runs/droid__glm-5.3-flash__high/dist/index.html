@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>机械表机芯 · 3D 展示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: radial-gradient(120% 120% at 50% 30%, #22262e 0%, #101216 55%, #08090b 100%);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #e8e2d4;
+    -webkit-user-select: none; user-select: none;
+  }
+  #app, #app canvas { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+
+  .title {
+    position: fixed; top: 16px; left: 18px; z-index: 5; pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,.7);
+  }
+  .title h1 { font-size: 19px; font-weight: 600; letter-spacing: 1px; color: #e8d9b0; }
+  .title p  { font-size: 12px; color: rgba(232,226,212,.55); margin-top: 3px; }
+
+  .hint {
+    position: fixed; top: 18px; right: 18px; z-index: 5; pointer-events: none;
+    font-size: 12px; color: rgba(232,226,212,.55);
+    background: rgba(16,18,22,.55); border: 1px solid rgba(232,217,176,.15);
+    border-radius: 20px; padding: 6px 14px; backdrop-filter: blur(6px);
+  }
+
+  #info {
+    position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px);
+    width: min(560px, calc(100% - 28px));
+    background: rgba(18,20,25,.82); border: 1px solid rgba(201,151,59,.35);
+    border-radius: 14px; padding: 14px 18px 15px; z-index: 6;
+    backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    opacity: 0; visibility: hidden; transition: all .28s ease;
+  }
+  #info.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+  #info-name { font-size: 17px; font-weight: 600; color: #e8c76f; display: inline; }
+  #info-en   { font-size: 12px; color: rgba(232,226,212,.5); margin-left: 8px; }
+  #info-desc { font-size: 13px; line-height: 1.65; color: rgba(240,236,226,.88); margin-top: 6px; }
+  #info-close {
+    position: absolute; top: 8px; right: 12px; border: none; background: none;
+    color: rgba(232,226,212,.5); font-size: 18px; cursor: pointer; padding: 4px 6px;
+  }
+  @media (max-width: 480px) {
+    .title h1 { font-size: 16px; }
+    .hint { font-size: 11px; top: 14px; right: 12px; padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="title">
+  <h1>机械表机芯</h1>
+  <p>发条盒 · 传动轮系 · 擒纵机构 · 摆轮</p>
+</div>
+
+<div class="hint">拖动旋转 · 滚轮/双指缩放 · 点击零件查看说明</div>
+
+<div id="info" role="dialog">
+  <button id="info-close" aria-label="关闭">✕</button>
+  <span id="info-name"></span><span id="info-en"></span>
+  <div id="info-desc"></div>
+</div>
+
+<script src="./bundle.js"></script>
+</body>
+</html>
