@@ -51,7 +51,7 @@ const tierOf = (id?: string) => theme.ratings.tiers.find((t) => t.id === id) ?? 
 
 const statsParts = [
   `${summary.total} 份答卷`,
-  summary.incomplete > 0 ? `${summary.incomplete} 份没交` : '',
+  summary.noDist > 0 ? `${summary.noDist} 份没交` : '',
   `${summary.harnesses} 个 agent`,
   `${summary.models} 个模型`,
   summary.minMs !== undefined

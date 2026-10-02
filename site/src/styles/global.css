@@ -855,8 +855,8 @@ select.sel {
   .theme { grid-template-columns: minmax(0, 1fr); }
   .mosaic { grid-template-columns: 2fr minmax(0, 1fr); }
   .mcell:nth-child(4), .mcell:nth-child(5) { display: none; }
-  .mcell:nth-child(3) .mmore--m { display: flex; }
-  .mcell:nth-child(3) .mplace { display: none; }
+  .mcell--more-m .mmore--m { display: flex; }
+  .mcell--more-m .mplace { display: none; }
 
   .tp { grid-template-columns: minmax(0, 1fr); }
   .tp-side { display: contents; }

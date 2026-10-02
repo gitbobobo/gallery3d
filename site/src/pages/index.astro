@@ -61,7 +61,7 @@ const totals = {
                 <h2 class="theme-title">{t.meta.title}</h2>
                 <p class="theme-prompt">{t.prompt}</p>
                 <p class="theme-stats">
-                  {s.total} 份答卷{s.incomplete > 0 && `，${s.incomplete} 份没交`} · {s.harnesses} 个 agent · {s.models} 个模型
+                  {s.total} 份答卷{s.noDist > 0 && `，${s.noDist} 份没交`} · {s.harnesses} 个 agent · {s.models} 个模型
                 </p>
                 <span class="theme-link">看全部 {s.total} 份答卷 →</span>
               </div>
@@ -69,10 +69,13 @@ const totals = {
                 {cells.length > 0 ? (
                   <div class:list={['mosaic', { 'mosaic--single': cells.length === 1 }]} aria-hidden="true">
                     {cells.map((r, i) => {
-                      // 桌面 +N 覆盖层（第 5 格）压住整格，里面的名口角标要拿掉
+                      // +N 覆盖层压住整格时不再显示名口角标：桌面在第 5 格
+                      // （此时直接不渲染），移动端在第 3 格（由 mcell--more-m
+                      // 配合 media query 隐藏，桌面端仍要保留角标）
+                      const moreM = i === 2 && thumbs.length > 3;
                       const moreD = i === 4 && thumbs.length > 5;
                       return (
-                        <div class:list={['mcell', { 'mcell--lead': i === 0 }]}>
+                        <div class:list={['mcell', { 'mcell--lead': i === 0, 'mcell--more-m': moreM }]}>
                           <img
                             src={`${workUrl(t.id, r.id)}${r.coverDesktop}`}
                             alt=""
@@ -81,9 +84,7 @@ const totals = {
                             height="400"
                           />
                           {r.place !== undefined && !moreD && <span class="mplace">#{r.place}</span>}
-                          {i === 2 && thumbs.length > 3 && (
-                            <span class="mmore mmore--m">+{thumbs.length - 3}</span>
-                          )}
+                          {moreM && <span class="mmore mmore--m">+{thumbs.length - 3}</span>}
                           {moreD && <span class="mmore">+{thumbs.length - 5}</span>}
                         </div>
                       );
