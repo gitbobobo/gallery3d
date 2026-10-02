@@ -1,0 +1,30 @@
+---
+// 顶栏：56px 高，左边面包屑（站名 + 可选 crumbs，" / " 分隔），右边 slot 放操作按钮。
+import { baseUrl } from '../data';
+
+export interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  crumbs?: Crumb[];
+}
+
+const { crumbs = [] } = Astro.props;
+---
+
+<header class="topbar">
+  <nav class="crumbs" aria-label="面包屑">
+    <a class="site-name" href={baseUrl('')}>答卷画廊</a>
+    {
+      crumbs.map((c) => (
+        <>
+          <span class="crumb-sep" aria-hidden="true">/</span>
+          {c.href ? <a class="crumb" href={c.href}>{c.label}</a> : <span class="crumb crumb--cur">{c.label}</span>}
+        </>
+      ))
+    }
+  </nav>
+  <div class="topbar-actions"><slot /></div>
+</header>

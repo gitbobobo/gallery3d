@@ -23,6 +23,9 @@ export const THEMES_DIR = process.env.GALLERY3D_THEMES_DIR
   ? resolve(process.env.GALLERY3D_THEMES_DIR)
   : resolve(SITE_ROOT, '../themes');
 
+// <repo>/data/*.json — shared id → display-name tables (optional inputs)
+export const DATA_DIR = resolve(SITE_ROOT, '../data');
+
 /** Base path (always ends with '/'); join with a leading-free path. */
 export const BASE: string = import.meta.env.BASE_URL ?? '/';
 export const baseUrl = (p = ''): string => BASE + p.replace(/^\/+/, '');
@@ -64,6 +67,12 @@ export interface Run {
   themeId: string;
   harness: string;
   model: string;
+  /** models.json 的 id：目录名按 `__` 切成 3 段时取中段，否则用 model */
+  modelKey: string;
+  /** models.json 的 display，缺省回退 model */
+  modelName: string;
+  /** harnesses.json 的 displayName，缺省回退 harness */
+  harnessName: string;
   effort: string;
   modelArg?: string;
   harnessVersion?: string;
@@ -72,6 +81,8 @@ export interface Run {
   /** 评级：等级 id 与同等级内名次（0 起）；未评级为 undefined */
   tierId?: string;
   rank?: number;
+  /** 全局名次（1 起），只给已评级的 run */
+  place?: number;
   preparedAt?: string;
   launchedAt?: string;
   finishedAt?: string;
@@ -136,7 +147,42 @@ const str = (v: unknown): string | undefined =>
 const strArr = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
 
-const readRun = (themeId: string, runDir: string, dirName: string): Run | null => {
+interface DisplayMaps {
+  harnesses: Map<string, string>;
+  models: Map<string, string>;
+}
+
+// data/harnesses.json: [{id, displayName}], data/models.json: [{id, display}]
+const readDisplayMaps = (): DisplayMaps => {
+  const harnesses = new Map<string, string>();
+  const models = new Map<string, string>();
+  const hj = readJson(join(DATA_DIR, 'harnesses.json'));
+  if (isObj(hj) && Array.isArray(hj.harnesses)) {
+    for (const x of hj.harnesses) {
+      if (!isObj(x)) continue;
+      const id = str(x.id);
+      const name = str(x.displayName);
+      if (id && name) harnesses.set(id, name);
+    }
+  }
+  const mj = readJson(join(DATA_DIR, 'models.json'));
+  if (isObj(mj) && Array.isArray(mj.models)) {
+    for (const x of mj.models) {
+      if (!isObj(x)) continue;
+      const id = str(x.id);
+      const name = str(x.display);
+      if (id && name) models.set(id, name);
+    }
+  }
+  return { harnesses, models };
+};
+
+const readRun = (
+  themeId: string,
+  runDir: string,
+  dirName: string,
+  names: DisplayMaps,
+): Run | null => {
   const j = readJson(join(runDir, 'run.json'));
   if (!isObj(j)) return null;
   const harness = str(j.harness);
@@ -158,12 +204,17 @@ const readRun = (themeId: string, runDir: string, dirName: string): Run | null =
   } catch {
     notesMd = undefined;
   }
+  const parts = dirName.split('__');
+  const modelKey = parts.length === 3 ? parts[1] : model;
   return {
     id: dirName,
     runId: str(j.runId) ?? dirName,
     themeId,
     harness,
     model,
+    modelKey,
+    modelName: names.models.get(modelKey) ?? model,
+    harnessName: names.harnesses.get(harness) ?? harness,
     effort,
     modelArg: str(j.modelArg),
     harnessVersion: str(j.harnessVersion),
@@ -214,7 +265,7 @@ const readRatings = (themeDir: string): Ratings => {
   return { tiers: tiers.length ? tiers : DEFAULT_TIERS, rows };
 };
 
-const readTheme = (dirName: string): Theme | null => {
+const readTheme = (dirName: string, names: DisplayMaps): Theme | null => {
   const themeDir = join(THEMES_DIR, dirName);
   const j = readJson(join(themeDir, 'theme.json'));
   if (!isObj(j)) return null;
@@ -234,16 +285,19 @@ const readTheme = (dirName: string): Theme | null => {
       const rd = join(runsDir, runId);
       try {
         if (!statSync(rd).isDirectory()) continue;
-        const run = readRun(dirName, rd, runId);
+        const run = readRun(dirName, rd, runId, names);
         if (run) runs.push(run);
       } catch {
         /* skip malformed run */
       }
     }
   }
-  // 标注等级/名次；丢弃指向不存在 run 的脏数据
+  // 标注等级/名次；丢弃指向不存在 run 的脏数据；rows 里不在 tiers 中的
+  // 等级 id 跳过（那些 run 视为未评级，否则分组时会丢卡）
+  const tierOrder = new Map(ratings.tiers.map((t, i) => [t.id, i]));
   const validIds = new Set(runs.map((r) => r.id));
   for (const [tierId, ids] of Object.entries(ratings.rows)) {
+    if (!tierOrder.has(tierId)) continue;
     const clean = ids.filter((id) => validIds.has(id));
     if (clean.length !== ids.length) ratings.rows[tierId] = clean;
     clean.forEach((id, i) => {
@@ -252,7 +306,6 @@ const readTheme = (dirName: string): Theme | null => {
     });
   }
   // 已评级在前，按等级顺序+行内名次；未评级按完成时间排在后
-  const tierOrder = new Map(ratings.tiers.map((t, i) => [t.id, i]));
   runs.sort((a, b) => {
     const ta = a.tierId !== undefined ? (tierOrder.get(a.tierId) ?? 999) : 999;
     const tb = b.tierId !== undefined ? (tierOrder.get(b.tierId) ?? 999) : 999;
@@ -260,6 +313,9 @@ const readTheme = (dirName: string): Theme | null => {
     if (a.tierId !== undefined && b.tierId !== undefined) return (a.rank ?? 0) - (b.rank ?? 0);
     return runSortKey(a).localeCompare(runSortKey(b)) || a.id.localeCompare(b.id);
   });
+  // 全局名次：排序完成后按顺序给已评级的 run 编号（1 起）
+  let place = 0;
+  for (const r of runs) if (r.tierId !== undefined) r.place = ++place;
   return {
     id: dirName,
     meta: {
@@ -281,11 +337,12 @@ const readTheme = (dirName: string): Theme | null => {
 /** Scan the themes dir once; safe on missing dir/malformed entries. */
 export const loadThemes = (): Theme[] => {
   if (!existsSync(THEMES_DIR)) return [];
+  const names = readDisplayMaps();
   const out: Theme[] = [];
   for (const dirName of readdirSync(THEMES_DIR)) {
     try {
       if (!statSync(join(THEMES_DIR, dirName)).isDirectory()) continue;
-      const t = readTheme(dirName);
+      const t = readTheme(dirName, names);
       if (t) out.push(t);
     } catch {
       /* skip malformed theme */
@@ -299,15 +356,73 @@ export const loadThemes = (): Theme[] => {
   return out;
 };
 
-/** Distinct facet values preserving a sensible order for filter rows. */
-export const facetValues = (runs: Run[], key: 'harness' | 'model' | 'effort'): string[] => {
-  const seen = new Map<string, number>();
-  for (const r of runs) seen.set(r[key], (seen.get(r[key]) ?? 0) + 1);
-  const effortOrder = ['high', 'medium', 'low', 'minimal'];
-  return [...seen.keys()].sort((a, b) =>
-    key === 'effort'
-      ? (effortOrder.indexOf(a) + 1 || 99) - (effortOrder.indexOf(b) + 1 || 99) ||
-        a.localeCompare(b)
-      : seen.get(b)! - seen.get(a)! || a.localeCompare(b),
-  );
+/** Runs grouped by tier for the salon wall; tier=null is the unrated tail. */
+export interface TierGroup {
+  tier: Tier | null;
+  runs: Run[];
+}
+
+/** Groups in tier order with the unrated group appended; empty groups included. */
+export const tierGroups = (theme: Theme): TierGroup[] => {
+  const groups: TierGroup[] = theme.ratings.tiers.map((tier) => ({
+    tier,
+    runs: theme.runs.filter((r) => r.tierId === tier.id),
+  }));
+  groups.push({ tier: null, runs: theme.runs.filter((r) => r.tierId === undefined) });
+  return groups;
+};
+
+export interface FacetValue {
+  value: string;
+  label: string;
+  count: number;
+}
+
+/** Distinct facet values (with display label + count) for filter selects. */
+export const facetValues = (
+  runs: Run[],
+  key: 'harness' | 'modelKey' | 'effort',
+): FacetValue[] => {
+  const seen = new Map<string, { label: string; count: number }>();
+  for (const r of runs) {
+    const value = r[key];
+    const label =
+      key === 'harness' ? r.harnessName : key === 'modelKey' ? r.modelName : value;
+    const cur = seen.get(value);
+    if (cur) cur.count += 1;
+    else seen.set(value, { label, count: 1 });
+  }
+  const effortOrder = ['xhigh', 'high', 'medium', 'low', 'minimal'];
+  return [...seen.entries()]
+    .map(([value, x]) => ({ value, label: x.label, count: x.count }))
+    .sort((a, b) =>
+      key === 'effort'
+        ? (effortOrder.indexOf(a.value) + 1 || 99) -
+            (effortOrder.indexOf(b.value) + 1 || 99) || a.value.localeCompare(b.value)
+        : b.count - a.count || a.label.localeCompare(b.label),
+    );
+};
+
+export interface ThemeSummary {
+  total: number;
+  incomplete: number;
+  harnesses: number;
+  models: number;
+  minMs?: number;
+  maxMs?: number;
+}
+
+/** Counts used by the home/theme headers; min/max over runs with durationMs. */
+export const themeSummary = (theme: Theme): ThemeSummary => {
+  const durations = theme.runs
+    .map((r) => r.stats.durationMs)
+    .filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+  return {
+    total: theme.runs.length,
+    incomplete: theme.runs.filter((r) => r.status === 'incomplete').length,
+    harnesses: new Set(theme.runs.map((r) => r.harness)).size,
+    models: new Set(theme.runs.map((r) => r.modelKey)).size,
+    minMs: durations.length ? Math.min(...durations) : undefined,
+    maxMs: durations.length ? Math.max(...durations) : undefined,
+  };
 };

@@ -1,0 +1,38 @@
+---
+// 等级色块：lg = 72×72 大方块（sticky 边栏用），sm = 行内小方块（表格/标题/栏头用）。
+// 颜色一律取 tier.color；未评级为透明底 + 虚线描边。
+import type { Tier } from '../data';
+
+interface Props {
+  tier: Tier | null;
+  count?: number;
+  size?: 'lg' | 'sm';
+}
+
+const { tier, count, size = 'lg' } = Astro.props;
+
+const label = tier?.label ?? '未评级';
+const fontSize =
+  label.length <= 1 ? 40 : label.length === 2 ? 32 : label.length === 3 ? 20 : 16;
+---
+
+{
+  size === 'lg' ? (
+    <div class="tm">
+      <span
+        class:list={['tm-box', { 'tm-box--unrated': !tier }]}
+        style={`font-size:${fontSize}px${tier ? `;background:${tier.color}` : ''}`}
+      >
+        {label}
+      </span>
+      {count !== undefined && <span class="tm-count mono">{count} 份</span>}
+    </div>
+  ) : (
+    <span
+      class:list={['tm-sm', { 'tm-sm--unrated': !tier }]}
+      style={tier ? `background:${tier.color}` : undefined}
+    >
+      {tier ? tier.label : '—'}
+    </span>
+  )
+}

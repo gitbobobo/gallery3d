@@ -9,7 +9,7 @@ interface Props {
 
 const {
   title = '答卷画廊',
-  description = '同一道题目，不同 AI 组合的答卷 —— Gallery3D 评测画廊',
+  description = '同一道题交给不同的 coding agent 和模型各做一遍，交上来的网页收在这里对照。',
 } = Astro.props;
 
 const fullTitle = title === '答卷画廊' ? title : `${title} · 答卷画廊`;
@@ -37,15 +37,6 @@ const fontFaceCss = `
     <title>{fullTitle}</title>
   </head>
   <body>
-    <!-- shared defs for the OMR pencil-scribble bubble fill -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-      <defs>
-        <filter id="scribble" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" seed="7" result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="8" />
-        </filter>
-      </defs>
-    </svg>
     <slot />
   </body>
 </html>
