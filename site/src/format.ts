@@ -21,7 +21,7 @@ export const fmtBytes = (n?: number): string => {
 export const fmtCost = (usd?: number): string =>
   usd === undefined || !Number.isFinite(usd) ? '—' : `$${usd.toFixed(4)}`;
 
-const fmtCount = (n?: number): string => {
+export const fmtCount = (n?: number): string => {
   if (n === undefined || !Number.isFinite(n)) return '—';
   if (n < 1000) return String(n);
   if (n < 1e6) return n < 1e4 ? `${(n / 1e3).toFixed(1)}K` : `${Math.round(n / 1e3)}K`;
@@ -44,3 +44,12 @@ export const fmtTime = (iso?: string): string => {
 };
 
 export const sha8 = (sha?: string): string => (sha ? sha.slice(0, 8) : '—');
+
+/** "2026-09-30T14:22:00Z" -> "2026-09-30" (UTC) */
+export const fmtDate = (iso?: string): string => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+};

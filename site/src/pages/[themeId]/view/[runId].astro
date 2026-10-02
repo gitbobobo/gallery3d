@@ -1,7 +1,8 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import TierMark from '../../../components/TierMark.astro';
 import { baseUrl, loadThemes, workEntry, type Run, type Theme } from '../../../data';
-import { fmtBytes, fmtCost, fmtDuration, fmtTime, fmtTokens, sha8 } from '../../../format';
+import { fmtBytes, fmtCost, fmtCount, fmtDuration, fmtTime, sha8 } from '../../../format';
 import { renderMd } from '../../../md';
 
 export const getStaticPaths = () =>
@@ -22,48 +23,61 @@ const { theme, run, prev, next } = Astro.props;
 
 const src = workEntry(theme.id, run.id);
 const notesHtml = run.notesMd ? renderMd(run.notesMd) : '';
+const tier = theme.ratings.tiers.find((t) => t.id === run.tierId) ?? null;
+const domains = run.stats.externalDomains ?? [];
+const navLabel = (r: Run) => `${r.modelName} · ${r.harnessName}`;
 
-const metaRows: [string, string, boolean?][] = [
-  ['组合 id', run.runId],
-  ['harness', run.harness],
-  ['model', run.modelArg ?? run.model],
-  ['强度', run.effort],
-  ['harness 版本', run.harnessVersion ?? '—'],
-  ['耗时', fmtDuration(run.stats.durationMs)],
-  ['token', fmtTokens(run.stats.tokensIn, run.stats.tokensOut)],
-  ['成本', fmtCost(run.stats.costUsd)],
-  ['产物大小', fmtBytes(run.stats.distBytes)],
-  ['控制台错误', run.stats.consoleErrors === undefined ? '—' : String(run.stats.consoleErrors), (run.stats.consoleErrors ?? 0) > 0],
-  ...(run.stats.externalDomains?.length
-    ? ([['外部域名', run.stats.externalDomains.join(', '), true]] as [string, string, boolean][])
-    : []),
-  ['时间', fmtTime(run.finishedAt ?? run.importedAt)],
-  ['状态', run.status === 'ok' ? '正常' : '未完成', run.status !== 'ok'],
-  ...(run.status !== 'ok' && run.reasons.length
-    ? ([['原因', run.reasons.join('；'), true]] as [string, string, boolean][])
-    : []),
-  ...(run.promptSha256 ? ([['提示词编号', sha8(run.promptSha256)]] as [string, string][]) : []),
+// warn 列：不用颜色，只用 600 字重 + "▲ " 前缀
+type Row = { k: string; v: string; sub?: string; warn?: boolean };
+const metaRows: Row[] = [
+  { k: '模型', v: run.modelName, sub: run.model },
+  { k: 'Agent', v: run.harnessName, sub: run.harnessVersion },
+  { k: '强度', v: run.effort },
+  { k: '用时', v: fmtDuration(run.stats.durationMs) },
+  { k: 'Token', v: `${fmtCount(run.stats.tokensIn)} in · ${fmtCount(run.stats.tokensOut)} out` },
+  { k: '成本', v: fmtCost(run.stats.costUsd) },
+  { k: '产物大小', v: fmtBytes(run.stats.distBytes) },
+  {
+    k: '控制台报错',
+    v: run.stats.consoleErrors === undefined ? '—' : String(run.stats.consoleErrors),
+    warn: (run.stats.consoleErrors ?? 0) > 0,
+  },
+  {
+    k: '外部域名',
+    v: domains.length ? domains.join('\n') : '无',
+    warn: domains.length > 0,
+  },
+  { k: '完成时间', v: fmtTime(run.finishedAt ?? run.importedAt) },
+  { k: '状态', v: run.hasDist ? '能打开' : '没有交卷', warn: !run.hasDist },
+  ...(run.reasons.length ? [{ k: '原因', v: run.reasons.join('；'), warn: true }] : []),
+  ...(run.promptSha256 ? [{ k: '提示词编号', v: sha8(run.promptSha256) }] : []),
+  { k: '答卷 id', v: run.id },
 ];
 ---
 
-<Base title={`${theme.meta.title} · ${run.id}`}>
+<Base title={`${run.modelName} · ${run.harnessName} · ${theme.meta.title}`}>
   <div class="viewer">
     <header class="vbar">
-      <a class="back-btn" href={baseUrl(`${theme.id}/`)} title="返回 {theme.meta.title}" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
+      <a class="vback" href={baseUrl(`${theme.id}/`)}>← {theme.meta.title}</a>
+      <span class="vsep" aria-hidden="true">│</span>
       <div class="vtitle">
-        <h1>{run.harness} × {run.model}</h1>
-        {run.status !== 'ok' && <span class="stamp">未完成</span>}
+        {tier && <TierMark tier={tier} size="sm" />}
+        <span class="vplace">
+          {run.place !== undefined ? `第 ${run.place} 名 · 共 ${theme.runs.length} 份` : '未评级'}
+        </span>
+        <h1>{run.modelName}</h1>
+        <span class="vsub">{run.harnessName} · <span class="mono">{run.effort}</span></span>
       </div>
       <div class="vtools">
         {prev ? (
-          <a class="vbtn" href={baseUrl(`${theme.id}/view/${prev.id}/`)} title={prev.id}>←</a>
+          <a class="btn" href={baseUrl(`${theme.id}/view/${prev.id}/`)} aria-label={`上一份：${navLabel(prev)}`} title={`上一份：${navLabel(prev)}`}>‹</a>
         ) : (
-          <span class="vbtn" aria-disabled="true">←</span>
+          <span class="btn" aria-disabled="true">‹</span>
         )}
         {next ? (
-          <a class="vbtn" href={baseUrl(`${theme.id}/view/${next.id}/`)} title={next.id}>→</a>
+          <a class="btn" href={baseUrl(`${theme.id}/view/${next.id}/`)} aria-label={`下一份：${navLabel(next)}`} title={`下一份：${navLabel(next)}`}>›</a>
         ) : (
-          <span class="vbtn" aria-disabled="true">→</span>
+          <span class="btn" aria-disabled="true">›</span>
         )}
         {run.hasDist && (
           <div class="seg" role="group" aria-label="预览尺寸" id="size-seg">
@@ -71,53 +85,63 @@ const metaRows: [string, string, boolean?][] = [
             <button type="button" aria-pressed="false" data-size="mobile">手机</button>
           </div>
         )}
-        <button class="vbtn" type="button" id="info-btn" aria-expanded="false">信息</button>
-        <a class="vbtn" href={baseUrl(`${theme.id}/compare/?a=${run.id}`)}>对比</a>
+        <button class="btn" type="button" id="info-btn" aria-expanded="false">信息</button>
+        <a class="btn" href={baseUrl(`${theme.id}/compare/?a=${run.id}`)}>对比</a>
         {run.hasDist && (
-          <a class="vbtn" href={src} target="_blank" rel="noreferrer" title="在新标签页打开">↗</a>
+          <a class="btn" href={src} target="_blank" rel="noreferrer" aria-label="新窗口打开" title="新窗口打开">↗</a>
         )}
       </div>
     </header>
 
-    <div class="stage" id="stage">
+    <div class="stage" id="stage" data-size="desktop">
       {run.hasDist ? (
         <iframe
           src={src}
-          title={`${theme.meta.title} — ${run.harness} · ${run.model} 的答卷`}
+          title={`${theme.meta.title} — ${run.modelName} · ${run.harnessName} 的答卷`}
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
           allow="fullscreen"
         ></iframe>
       ) : (
-        <div class="no-dist">
-          {'// 这份答卷没有提交产物 —— 空白卷。'}
+        <div class="empty-sheet">
+          <h2>没有交卷</h2>
           {run.reasons.length > 0 && <p>{run.reasons.join('；')}</p>}
+          {(run.stats.durationMs !== undefined || run.stats.tokensIn !== undefined) && (
+            <p>
+              用了 {fmtDuration(run.stats.durationMs)}，读入 {fmtCount(run.stats.tokensIn)} token，写出 {fmtCount(run.stats.tokensOut)} token。
+            </p>
+          )}
         </div>
       )}
       {run.status !== 'ok' && run.hasDist && (
-        <div class="stage-flag mono" title={run.reasons.join('；')}>
+        <div class="stage-flag" title={run.reasons.join('；')}>
           未完成{run.reasons.length ? ` · ${run.reasons.join('；')}` : ''}
         </div>
       )}
     </div>
 
     <div class="scrim" id="scrim"></div>
-    <aside class="drawer" id="drawer" aria-label="答题信息">
+    <aside class="drawer" id="drawer" aria-label="答卷信息">
       <div class="drawer-head">
-        <span class="mono">答卷信息</span>
-        <button class="vbtn" type="button" id="drawer-close">✕</button>
+        <span class="drawer-title">答卷信息</span>
+        <button class="btn" type="button" id="drawer-close" aria-label="关闭">✕</button>
       </div>
       <dl class="meta-list">
-        {metaRows.map(([k, v, warn]) => (
-          <div><dt>{k}</dt><dd class:list={[{ warn }]}>{v}</dd></div>
+        {metaRows.map((row) => (
+          <div>
+            <dt>{row.k}</dt>
+            <dd class:list={[{ warn: row.warn }]}>
+              {row.warn ? `▲ ${row.v}` : row.v}
+              {row.sub && <span class="dd-sub">{row.sub}</span>}
+            </dd>
+          </div>
         ))}
       </dl>
       {notesHtml && (
         <>
-          <h2 class="drawer-sub">备注</h2>
+          <h2 class="drawer-sub">NOTES.md（agent 自己写的说明）</h2>
           <div class="notes" set:html={notesHtml} />
         </>
       )}
-      <p class="drawer-foot mono">GALLERY3D — {theme.id} / {run.id}</p>
     </aside>
   </div>
 
@@ -128,7 +152,7 @@ const metaRows: [string, string, boolean?][] = [
       if (!btn) return;
       document.querySelectorAll('#size-seg button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
       btn.setAttribute('aria-pressed', 'true');
-      stage.classList.toggle('stage-mobile', btn.dataset.size === 'mobile');
+      stage.dataset.size = btn.dataset.size === 'mobile' ? 'mobile' : 'desktop';
     });
 
     const drawer = document.getElementById('drawer')!;

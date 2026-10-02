@@ -1,7 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Bubble from '../../components/Bubble.astro';
-import { baseUrl, loadThemes, workEntry, type Theme } from '../../data';
+import TopBar from '../../components/TopBar.astro';
+import {
+  baseUrl,
+  loadThemes,
+  tierGroups,
+  workEntry,
+  type Theme,
+} from '../../data';
 
 export const getStaticPaths = () =>
   loadThemes().map((theme) => ({ params: { themeId: theme.id }, props: { theme } }));
@@ -9,18 +15,24 @@ export const getStaticPaths = () =>
 interface Props { theme: Theme }
 const { theme } = Astro.props;
 const runs = theme.runs;
+const groups = tierGroups(theme).filter((g) => g.runs.length > 0);
 
-// serializable run info for the client-side picker
+// serializable run info for the client-side pane picker
 const runsJson = runs.map((r) => ({
   id: r.id,
-  label: `${r.harness} · ${r.model} · ${r.effort}`,
+  label: `${r.modelName} · ${r.harnessName} · ${r.effort}`,
+  view: baseUrl(`${theme.id}/view/${r.id}/`),
   src: workEntry(theme.id, r.id),
   hasDist: r.hasDist,
   status: r.status,
+  place: r.place ?? null,
+  tier: theme.ratings.tiers.find((t) => t.id === r.tierId) ?? null,
 }));
 
 const defA = runs[0];
 const defB = runs[1];
+const optLabel = (r: (typeof runs)[number]) =>
+  `${r.place !== undefined ? `#${r.place} ` : ''}${r.modelName} · ${r.harnessName} · ${r.effort}${r.status !== 'ok' ? '（没有交卷）' : ''}`;
 const iframeAttrs = {
   sandbox: 'allow-scripts allow-same-origin allow-forms allow-pointer-lock',
   allow: 'fullscreen',
@@ -28,188 +40,161 @@ const iframeAttrs = {
 } as const;
 ---
 
-<Base title={`${theme.meta.title} · 对比`}>
-  <div class="wrap page">
-    <nav class="topnav">
-      <a class="back-btn" href={baseUrl(`${theme.id}/`)} title="返回 {theme.meta.title}" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
-    </nav>
-
-    <header class="view-head">
-      <h1>对比 · {theme.meta.title}</h1>
-      <span class="meta mono">{runs.length} 份答卷中选择两份</span>
-    </header>
+<Base title={`对比 · ${theme.meta.title}`}>
+  <div class="cmp" id="cmp" data-size="desktop">
+    <TopBar
+      crumbs={[
+        { label: theme.meta.title, href: baseUrl(`${theme.id}/`) },
+        { label: '对比' },
+      ]}
+    >
+      {runs.length > 0 && (
+        <div class="seg" role="group" aria-label="预览尺寸" id="size-seg">
+          <button type="button" aria-pressed="true" data-size="desktop">桌面</button>
+          <button type="button" aria-pressed="false" data-size="mobile">手机</button>
+        </div>
+      )}
+    </TopBar>
 
     {runs.length === 0 ? (
-      <p class="empty-state">{'// 这道题目还没有答卷可对比。'}</p>
+      <p class="empty wrap">这道题还没有答卷可对比。</p>
     ) : (
       <>
-        <div class="pickers">
-          <div class="picker">
-            <span class="picker-tag">答卷 A</span>
-            <div class="brow" role="radiogroup" aria-label="选择答卷 A" id="picker-a">
-              {runs.map((r) => (
-                <Bubble
-                  value={r.id}
-                  label={r.status === 'ok' ? `${r.harness} · ${r.model} · ${r.effort}` : `${r.harness} · ${r.model} · ${r.effort}（未完成）`}
-                  checked={r.id === defA?.id}
-                />
-              ))}
-            </div>
-          </div>
-          <div class="picker">
-            <span class="picker-tag">答卷 B</span>
-            <div class="brow" role="radiogroup" aria-label="选择答卷 B" id="picker-b">
-              {runs.length > 1 && <Bubble value="" label="（留空）" checked={!defB} mono={false} />}
-              {runs.map((r) => (
-                <Bubble
-                  value={r.id}
-                  label={r.status === 'ok' ? `${r.harness} · ${r.model} · ${r.effort}` : `${r.harness} · ${r.model} · ${r.effort}（未完成）`}
-                  checked={r.id === defB?.id}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div class="cmp-seg-wrap">
+        <div class="cmp-pane-seg">
           <div class="seg" role="group" aria-label="切换窗格" id="pane-seg">
-            <button type="button" aria-pressed="true" data-pane="a">A</button>
-            <button type="button" aria-pressed="false" data-pane="b">B</button>
+            <button type="button" aria-pressed="true" data-pane="a">左</button>
+            <button type="button" aria-pressed="false" data-pane="b">右</button>
           </div>
         </div>
-
-        <div class="compare-grid">
-          <div class="pane pane-a active" id="pane-a">
-            <figure>
-              <div class="stage">
-                {defA?.hasDist ? (
-                  <iframe id="frame-a" {...iframeAttrs} src={workEntry(theme.id, defA.id)} title={`答卷 A — ${defA.id}`}></iframe>
-                ) : (
-                  <iframe id="frame-a" {...iframeAttrs} title="答卷 A" hidden></iframe>
-                )}
-                <div class="no-dist" id="empty-a" hidden={!!defA?.hasDist}>
-                  {defA ? '这份答卷没有提交产物' : '还差一份答卷 —— 等待另一组提交。'}
+        <div class="cmp-panes">
+          {(['a', 'b'] as const).map((slot) => {
+            const def = slot === 'a' ? defA : defB;
+            const defTier = def ? (runsJson.find((r) => r.id === def.id)?.tier ?? null) : null;
+            return (
+              <section class:list={['pane', { active: slot === 'a' }]} id={`pane-${slot}`}>
+                <div class="pane-head">
+                  <select class="sel" id={`sel-${slot}`} aria-label={slot === 'a' ? '左边的答卷' : '右边的答卷'}>
+                    {slot === 'b' && <option value="">（不选）</option>}
+                    {groups.map((g) => (
+                      <optgroup label={g.tier?.label ?? '未评级'}>
+                        {g.runs.map((r) => (
+                          <option value={r.id} selected={def?.id === r.id}>{optLabel(r)}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <span
+                    class="tm-sm"
+                    id={`mark-${slot}`}
+                    hidden={!defTier}
+                    style={defTier ? `background:${defTier.color}` : undefined}
+                  >
+                    {defTier?.label ?? '—'}
+                  </span>
+                  <a class="btn" id={`open-${slot}`} href={def ? baseUrl(`${theme.id}/view/${def.id}/`) : undefined} hidden={!def}>
+                    打开 →
+                  </a>
                 </div>
-              </div>
-              <figcaption>
-                <span class="pane-tag">A</span>
-                <span id="cap-a">{defA ? `${defA.harness} · ${defA.model} · ${defA.effort}` : '—'}</span>
-              </figcaption>
-            </figure>
-          </div>
-          <div class="pane pane-b" id="pane-b">
-            <figure>
-              <div class="stage">
-                {defB?.hasDist ? (
-                  <iframe id="frame-b" {...iframeAttrs} src={workEntry(theme.id, defB.id)} title={`答卷 B — ${defB.id}`}></iframe>
-                ) : (
-                  <iframe id="frame-b" {...iframeAttrs} title="答卷 B" hidden></iframe>
-                )}
-                <div class="no-dist" id="empty-b" hidden={!!defB?.hasDist}>
-                  {defB ? '这份答卷没有提交产物' : '还差一份答卷 —— 等待另一组提交。'}
+                <div class="pane-stage">
+                  {def?.hasDist ? (
+                    <iframe id={`frame-${slot}`} {...iframeAttrs} src={workEntry(theme.id, def.id)} title={`答卷 ${slot === 'a' ? '左' : '右'} — ${def.id}`}></iframe>
+                  ) : (
+                    <iframe id={`frame-${slot}`} {...iframeAttrs} title={`答卷 ${slot === 'a' ? '左' : '右'}`} hidden></iframe>
+                  )}
+                  <div class="pane-empty" id={`empty-${slot}`} hidden={!!def?.hasDist}>
+                    {def ? '这份答卷没有交卷。' : '选一份答卷放在这里。'}
+                  </div>
                 </div>
-              </div>
-              <figcaption>
-                <span class="pane-tag">B</span>
-                <span id="cap-b">{defB ? `${defB.harness} · ${defB.model} · ${defB.effort}` : '还差一份答卷'}</span>
-              </figcaption>
-            </figure>
-          </div>
+              </section>
+            );
+          })}
         </div>
       </>
     )}
-
-    <footer class="footer">
-      <span>GALLERY3D — {theme.id} / compare</span>
-      <span>A / B</span>
-    </footer>
   </div>
 
   {runs.length > 0 && (
-    <script type="application/json" id="runs-data" set:html={JSON.stringify(runsJson)} />
+    <script type="application/json" id="runs-data" set:html={JSON.stringify(runsJson).replace(/</g, '\\u003c')} />
   )}
   {runs.length > 0 && (
     <script>
-      interface RunInfo { id: string; label: string; src: string; hasDist: boolean; status: string }
+      interface RunInfo {
+        id: string; label: string; view: string; src: string;
+        hasDist: boolean; status: string; place: number | null;
+        tier: { label: string; color: string } | null;
+      }
       const RUNS: RunInfo[] = JSON.parse(document.getElementById('runs-data')!.textContent!);
       const byId = new Map(RUNS.map((r) => [r.id, r]));
 
-      const els = {
-        a: {
-          frame: document.getElementById('frame-a') as HTMLIFrameElement,
-          empty: document.getElementById('empty-a') as HTMLElement,
-          cap: document.getElementById('cap-a') as HTMLElement,
-          picker: document.getElementById('picker-a') as HTMLElement,
-        },
-        b: {
-          frame: document.getElementById('frame-b') as HTMLIFrameElement,
-          empty: document.getElementById('empty-b') as HTMLElement,
-          cap: document.getElementById('cap-b') as HTMLElement,
-          picker: document.getElementById('picker-b') as HTMLElement,
-        },
-      };
+      const els = (['a', 'b'] as const).map((slot) => ({
+        sel: document.getElementById(`sel-${slot}`) as HTMLSelectElement,
+        frame: document.getElementById(`frame-${slot}`) as HTMLIFrameElement,
+        empty: document.getElementById(`empty-${slot}`) as HTMLElement,
+        mark: document.getElementById(`mark-${slot}`) as HTMLElement,
+        open: document.getElementById(`open-${slot}`) as HTMLAnchorElement,
+      }));
 
       const q = new URLSearchParams(location.search);
-      const pick = (v: string | null, fallback: string) =>
-        v && byId.has(v) ? v : fallback;
-      let sel = {
+      const pick = (v: string | null, fallback: string) => (v && byId.has(v) ? v : fallback);
+      const sel = {
         a: pick(q.get('a'), RUNS[0]?.id ?? ''),
         b: q.has('b') ? pick(q.get('b'), '') : (RUNS[1]?.id ?? ''),
       };
 
-      function syncPicker(slot: 'a' | 'b') {
-        els[slot].picker.querySelectorAll('.bubble').forEach((b) =>
-          b.setAttribute('aria-checked', String((b as HTMLElement).dataset.value === sel[slot])),
-        );
-      }
-
-      function render(slot: 'a' | 'b') {
-        const { frame, empty, cap } = els[slot];
+      function render(i: 0 | 1, slot: 'a' | 'b') {
+        const e = els[i];
         const run = byId.get(sel[slot]);
+        e.sel.value = sel[slot];
         if (run?.hasDist) {
-          if (frame.getAttribute('src') !== run.src) frame.setAttribute('src', run.src);
-          frame.hidden = false;
-          empty.hidden = true;
-          cap.textContent = run.label;
+          if (e.frame.getAttribute('src') !== run.src) e.frame.setAttribute('src', run.src);
+          e.frame.hidden = false;
+          e.empty.hidden = true;
         } else {
-          frame.hidden = true;
-          frame.removeAttribute('src');
-          empty.hidden = false;
-          empty.textContent = run
-            ? '// 这份答卷没有提交产物 —— 空白卷。'
-            : '// 还差一份答卷 —— 等待另一组提交。';
-          cap.textContent = run ? `${run.label}（无产物）` : '还差一份答卷';
+          e.frame.hidden = true;
+          e.frame.removeAttribute('src');
+          e.empty.hidden = false;
+          e.empty.textContent = run ? '这份答卷没有交卷。' : '选一份答卷放在这里。';
         }
-        syncPicker(slot);
+        e.mark.hidden = !run?.tier;
+        if (run?.tier) {
+          e.mark.textContent = run.tier.label;
+          e.mark.style.background = run.tier.color;
+        }
+        e.open.hidden = !run;
+        if (run) e.open.href = run.view;
       }
 
       function apply() {
-        render('a');
-        render('b');
+        render(0, 'a');
+        render(1, 'b');
         const u = new URL(location.href);
         u.searchParams.set('a', sel.a);
         u.searchParams.set('b', sel.b);
         history.replaceState(null, '', u);
       }
 
-      (['a', 'b'] as const).forEach((slot) => {
-        els[slot].picker.addEventListener('click', (e) => {
-          const btn = (e.target as HTMLElement).closest<HTMLElement>('.bubble');
-          if (!btn) return;
-          sel[slot] = btn.dataset.value ?? '';
-          apply();
-        });
-      });
+      els[0].sel.addEventListener('change', () => { sel.a = els[0].sel.value; apply(); });
+      els[1].sel.addEventListener('change', () => { sel.b = els[1].sel.value; apply(); });
 
-      // narrow screens: A/B segmented pane switcher
-      const seg = document.getElementById('pane-seg');
-      seg?.addEventListener('click', (e) => {
+      // narrow screens: 左|右 segmented pane switcher
+      const paneSeg = document.getElementById('pane-seg');
+      paneSeg?.addEventListener('click', (e) => {
         const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-pane]');
         if (!btn) return;
-        seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        paneSeg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
         btn.setAttribute('aria-pressed', 'true');
         document.getElementById('pane-a')!.classList.toggle('active', btn.dataset.pane === 'a');
         document.getElementById('pane-b')!.classList.toggle('active', btn.dataset.pane === 'b');
+      });
+
+      // 桌面|手机：两栏 iframe 都变 390px 宽居中
+      const cmp = document.getElementById('cmp')!;
+      document.getElementById('size-seg')?.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-size]');
+        if (!btn) return;
+        document.querySelectorAll('#size-seg button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        cmp.dataset.size = btn.dataset.size === 'mobile' ? 'mobile' : 'desktop';
       });
 
       apply();

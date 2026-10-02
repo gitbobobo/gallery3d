@@ -1,92 +1,127 @@
 ---
 import Base from '../layouts/Base.astro';
-import Bubble from '../components/Bubble.astro';
-import { loadThemes, baseUrl, workUrl } from '../data';
+import { baseUrl, loadThemes, themeSummary, workUrl } from '../data';
+import { fmtDate, sha8 } from '../format';
 
 const themes = loadThemes();
 const categories = [...new Set(themes.map((t) => t.meta.category))].sort();
 const catLabel = (c: string) => (c === '3d' ? '3D' : c === 'web' ? '网页' : c);
+const totals = {
+  runs: themes.reduce((n, t) => n + t.runs.length, 0),
+  harnesses: new Set(themes.flatMap((t) => t.runs.map((r) => r.harness))).size,
+  models: new Set(themes.flatMap((t) => t.runs.map((r) => r.modelKey))).size,
+};
 ---
 
 <Base>
   <div class="wrap">
-    <header class="masthead">
-      <h1 class="site-title">
-        <span class="en">GALLERY3D · ANSWER SHEETS</span>
-        答卷画廊
-      </h1>
-      <p class="tagline">同一道题目，不同 AI 组合的答卷<span class="dot">。</span></p>
+    <header class="home-head">
+      <h1 class="wordmark">答卷画廊<span class="wordmark-en">Gallery3D</span></h1>
+      <div class="home-intro">
+        <p>同一道题，交给不同的 coding agent 和模型各做一遍。交上来的网页都收在这里，按评级从好到差排。</p>
+        <p class="home-stats">
+          {themes.length} 道题 · {totals.runs} 份答卷 · {totals.harnesses} 个 agent · {totals.models} 个模型
+        </p>
+      </div>
     </header>
 
-    {categories.length >= 2 && (
-      <nav class="catnav" aria-label="题目分类">
-        <div class="brow" role="radiogroup" aria-label="分类筛选" data-group="cat">
-          <span class="brow-label">分类</span>
-          <Bubble value="" label="全部" checked />
-          {categories.map((c) => <Bubble value={c} label={catLabel(c)} mono={false} />)}
-        </div>
-      </nav>
-    )}
+    {
+      categories.length >= 2 && (
+        <nav class="catnav" aria-label="题目分类">
+          <div class="seg" role="group" aria-label="分类筛选" id="cat-seg">
+            <button type="button" aria-pressed="true" data-cat="">全部</button>
+            {categories.map((c) => (
+              <button type="button" aria-pressed="false" data-cat={c}>{catLabel(c)}</button>
+            ))}
+          </div>
+        </nav>
+      )
+    }
 
     <main class="theme-list" id="theme-list">
       {themes.length === 0 && (
-        <p class="empty-state">{'// 还没有题目 —— 等第一份试卷发下来。'}</p>
+        <p class="empty">
+          还没有题目。运行 <code>pnpm g theme new &lt;slug&gt;</code> 出第一道题。
+        </p>
       )}
-      {themes.map((t) => {
-        const okRuns = t.runs.filter((r) => r.status === 'ok');
-        const thumbs = t.runs.filter((r) => r.coverDesktop);
-        return (
-          <a class="theme-row" href={baseUrl(`${t.id}/`)} data-category={t.meta.category}>
-            <span class="stamp">{catLabel(t.meta.category)}</span>
-            <div class="thead">
-              <h2>{t.meta.title}</h2>
-              <span class="tmeta">
-                {t.runs.length} 份答卷
-                {okRuns.length < t.runs.length && ` · ${t.runs.length - okRuns.length} 未完成`}
-                {t.meta.tags.length > 0 && ` · ${t.meta.tags.join(' / ')}`}
-              </span>
-            </div>
-            {thumbs.length > 0 ? (
-              <div class="thumb-strip" aria-hidden="true">
-                {thumbs.slice(0, 8).map((r) => (
-                  <img
-                    src={`${workUrl(t.id, r.id)}${r.coverDesktop}`}
-                    alt=""
-                    loading="lazy"
-                    width="150"
-                    height="94"
-                  />
-                ))}
+      {
+        themes.map((t) => {
+          const s = themeSummary(t);
+          const thumbs = t.runs.filter((r) => r.coverDesktop);
+          const cells = thumbs.slice(0, 5);
+          const lead = cells[0];
+          return (
+            <a class="theme" href={baseUrl(`${t.id}/`)} data-category={t.meta.category}>
+              <div>
+                <div class="theme-meta">
+                  {catLabel(t.meta.category)}
+                  {t.meta.promptSha256 && ` · 编号 ${sha8(t.meta.promptSha256)}`}
+                  {t.meta.createdAt && ` · ${fmtDate(t.meta.createdAt)}`}
+                </div>
+                <h2 class="theme-title">{t.meta.title}</h2>
+                <p class="theme-prompt">{t.prompt}</p>
+                <p class="theme-stats">
+                  {s.total} 份答卷{s.incomplete > 0 && `，${s.incomplete} 份没交`} · {s.harnesses} 个 agent · {s.models} 个模型
+                </p>
+                <span class="theme-link">看全部 {s.total} 份答卷 →</span>
               </div>
-            ) : (
-              <div class="thumb-strip" aria-hidden="true">
-                <span class="empty-note">— 空白答题区 —</span>
+              <div>
+                {cells.length > 0 ? (
+                  <div class:list={['mosaic', { 'mosaic--single': cells.length === 1 }]} aria-hidden="true">
+                    {cells.map((r, i) => {
+                      // 桌面 +N 覆盖层（第 5 格）压住整格，里面的名口角标要拿掉
+                      const moreD = i === 4 && thumbs.length > 5;
+                      return (
+                        <div class:list={['mcell', { 'mcell--lead': i === 0 }]}>
+                          <img
+                            src={`${workUrl(t.id, r.id)}${r.coverDesktop}`}
+                            alt=""
+                            loading="lazy"
+                            width="640"
+                            height="400"
+                          />
+                          {r.place !== undefined && !moreD && <span class="mplace">#{r.place}</span>}
+                          {i === 2 && thumbs.length > 3 && (
+                            <span class="mmore mmore--m">+{thumbs.length - 3}</span>
+                          )}
+                          {moreD && <span class="mmore">+{thumbs.length - 5}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div class="mosaic" aria-hidden="true">
+                    <div class="mcell mcell--blank"><span class="blank-why">还没有封面</span></div>
+                  </div>
+                )}
+                {lead && (
+                  <p class="mosaic-cap">
+                    {lead.place ? `第 ${lead.place} 名 ` : ''}{lead.modelName} · {lead.harnessName}
+                  </p>
+                )}
               </div>
-            )}
-          </a>
-        );
-      })}
+            </a>
+          );
+        })
+      }
     </main>
-
-    <footer class="footer">
-      <span>GALLERY3D — AI 答卷陈列室</span>
-      <span>OMR · 填涂作答</span>
-    </footer>
   </div>
 
-  {categories.length >= 2 && (
-    <script>
-      // category bubble row -> filter theme rows
-      const group = document.querySelector('.brow[data-group="cat"]');
-      const rows = [...document.querySelectorAll('.theme-row')];
-      group?.addEventListener('click', (e) => {
-        const btn = (e.target as HTMLElement).closest('.bubble') as HTMLElement | null;
-        if (!btn) return;
-        group.querySelectorAll('.bubble').forEach((b) => b.setAttribute('aria-checked', 'false'));
-        btn.setAttribute('aria-checked', 'true');
-        const v = btn.dataset.value ?? '';
-        rows.forEach((r) => ((r as HTMLElement).hidden = !!v && (r as HTMLElement).dataset.category !== v));
-      });
-    </script>
-  )}
+  {
+    categories.length >= 2 && (
+      <script>
+        // category segmented control -> filter theme blocks
+        const seg = document.getElementById('cat-seg');
+        const rows = [...document.querySelectorAll<HTMLElement>('.theme')];
+        seg?.addEventListener('click', (e) => {
+          const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-cat]');
+          if (!btn) return;
+          seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+          btn.setAttribute('aria-pressed', 'true');
+          const v = btn.dataset.cat ?? '';
+          rows.forEach((r) => (r.hidden = !!v && r.dataset.category !== v));
+        });
+      </script>
+    )
+  }
 </Base>

@@ -1,37 +1,42 @@
 ---
+// 调整评级板：dev-only（getStaticPaths 在生产构建返回 []）。
+// 拖动卡片改等级/名次，松手自动 POST /__api/rate 写 ratings.json。
 import Base from '../../layouts/Base.astro';
+import TopBar from '../../components/TopBar.astro';
 import { baseUrl, loadThemes, workEntry, workUrl, type Theme } from '../../data';
-import { sha8 } from '../../format';
 
-export const getStaticPaths = () =>
-  loadThemes().map((theme) => ({ params: { themeId: theme.id }, props: { theme } }));
+export const getStaticPaths = () => {
+  if (!import.meta.env.DEV) return [];
+  return loadThemes().map((theme) => ({ params: { themeId: theme.id }, props: { theme } }));
+};
 
 interface Props { theme: Theme }
 const { theme } = Astro.props;
 const { tiers, rows } = theme.ratings;
 
-const editable = import.meta.env.DEV;
 const placed = new Set(Object.values(rows).flat());
 const pool = theme.runs.filter((r) => !placed.has(r.id));
-const short = (m: string) => (m.includes('/') ? m.split('/').pop()! : m);
-const cardLabel = (r: Theme['runs'][number]) => `${r.harness} · ${short(r.model)}`;
+const cardLabel = (r: Theme['runs'][number]) => `${r.modelName} · ${r.harnessName}`;
 const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
 ---
 
-<Base title={`评级榜 · ${theme.meta.title}`}>
+<Base title={`调整评级 · ${theme.meta.title}`}>
   <div class="rank-shell">
-    <header class="rank-head">
-      <a class="back-btn" href={baseUrl(`${theme.id}/`)} title="返回 {theme.meta.title}" aria-label="返回"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 8H2.5" /><path d="M7 3L2.5 8 7 13" /></svg></a>
-      <h1>{theme.meta.title} · 评级榜</h1>
-      <span class="meta mono">{theme.id} · {theme.runs.length} 份答卷 · 编号 {sha8(theme.meta.promptSha256)}</span>
-    </header>
+    <TopBar
+      crumbs={[
+        { label: theme.meta.title, href: baseUrl(`${theme.id}/`) },
+        { label: '调整评级' },
+      ]}
+    >
+      <span class="save-state" id="save-state"></span>
+    </TopBar>
+    <p class="rank-hint">拖动卡片调整等级和名次，松手自动保存到 ratings.json。双击卡片打开答卷，点眼睛图标预览。</p>
 
     <div
       class="tier-board"
       id="board"
-      data-editable={editable || undefined}
       data-theme={theme.id}
-      data-api={editable ? baseUrl('__api/rate') : undefined}
+      data-api={baseUrl('__api/rate')}
     >
       {
         [...tiers, { id: '', label: '未评级', color: '' }].map((t) => (
@@ -51,10 +56,7 @@ const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
                     data-href={baseUrl(`${theme.id}/view/${r.id}/`)}
                     style={img ? `background-image:url(${workUrl(theme.id, r.id)}${img})` : undefined}
                   >
-                    {!img && <span class="tcard-blank"><span class="stamp">未完成</span></span>}
-                    {!editable && (
-                      <a class="tcard-link" href={baseUrl(`${theme.id}/view/${r.id}/`)} aria-label={cardLabel(r)} />
-                    )}
+                    {!img && <span class="tcard-blank">没有交卷</span>}
                     {r.hasDist && (
                       <a class="tcard-zoom" href={`#z-${r.id}`} aria-label="预览效果" title="预览效果">
                         <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
@@ -72,14 +74,10 @@ const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
         ))
       }
     </div>
-
-    <footer class="rank-foot mono">
-      <span id="save-state">{editable ? '' : 'READONLY'}</span>
-    </footer>
   </div>
 
   {theme.runs.filter((r) => r.hasDist).map((r) => (
-    <div class="lightbox lightbox--preview" id={`z-${r.id}`}>
+    <div class="lightbox" id={`z-${r.id}`}>
       <a class="lb-backdrop" href="#_" aria-label="关闭" />
       <iframe src={workEntry(theme.id, r.id)} loading="lazy" title={cardLabel(r)} />
       <a class="lb-close" href="#_" aria-label="关闭">×</a>
@@ -87,74 +85,67 @@ const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
     </div>
   ))}
 
-  {editable && (
-    <script>
-      import Sortable from 'sortablejs';
+  <script type="application/json" id="tiers-data" set:html={JSON.stringify(theme.ratings.tiers).replace(/</g, '\\u003c')} />
 
-      const board = document.getElementById('board')!;
-      const saveState = document.getElementById('save-state')!;
-      let timer: ReturnType<typeof setTimeout> | undefined;
+  <script>
+    import Sortable from 'sortablejs';
 
-      const snapshot = () => {
-        const tiers: { id: string; label: string; color: string }[] = [];
-        const rows: Record<string, string[]> = {};
-        board.querySelectorAll<HTMLElement>('.tier-row').forEach((row) => {
-          const label = row.querySelector<HTMLElement>('.tier-label')!;
-          const body = row.querySelector<HTMLElement>('.tier-body')!;
-          const id = body.dataset.tier ?? '';
-          if (!id) return;
-          tiers.push({ id, label: label.textContent?.trim() ?? id, color: label.style.background || '#d9dde3' });
-          rows[id] = [...body.querySelectorAll<HTMLElement>('.tcard')].map((c) => c.dataset.run!);
-        });
-        return { theme: board.dataset.theme, tiers, rows };
-      };
+    const board = document.getElementById('board')!;
+    const saveState = document.getElementById('save-state')!;
+    // tiers 原样回传（不再从 DOM 的 style.background 反推颜色）
+    const TIERS = JSON.parse(document.getElementById('tiers-data')!.textContent!);
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-      const save = () => {
-        clearTimeout(timer);
-        timer = setTimeout(async () => {
-          saveState.textContent = 'SAVING…';
-          try {
-            const res = await fetch(board.dataset.api!, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify(snapshot()),
-            });
-            saveState.textContent = res.ok ? 'SAVED' : 'SAVE FAILED';
-          } catch {
-            saveState.textContent = 'SAVE FAILED — dev 服务未运行';
-          }
-        }, 350);
-      };
-
+    const snapshot = () => {
+      const rows: Record<string, string[]> = {};
       board.querySelectorAll<HTMLElement>('.tier-body').forEach((body) => {
-        new Sortable(body, {
-          group: 'tiers',
-          animation: 160,
-          draggable: '.tcard',
-          filter: '.tcard-zoom',
-          preventOnFilter: false,
-          ghostClass: 'tcard-ghost',
-          chosenClass: 'tcard-chosen',
-          dragClass: 'tcard-drag',
-          delayOnTouchOnly: false,
-          touchStartThreshold: 6,
-          onSort: save,
-        });
+        const id = body.dataset.tier ?? '';
+        if (!id) return;
+        rows[id] = [...body.querySelectorAll<HTMLElement>('.tcard')].map((c) => c.dataset.run!);
       });
+      return { theme: board.dataset.theme, tiers: TIERS, rows };
+    };
 
-      // 编辑态下卡片是拖柄不是链接：单击仍阻止跳转，双击进详情；放大按钮正常跳转
-      board.addEventListener('click', (e) => {
-        const t = e.target as HTMLElement;
-        if (t.closest('.tcard-zoom')) return;
-        if (t.closest('.tcard')) e.preventDefault();
+    const save = () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        saveState.textContent = '保存中…';
+        try {
+          const res = await fetch(board.dataset.api!, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(snapshot()),
+          });
+          saveState.textContent = res.ok ? '已保存' : '保存失败（dev 服务没在运行？）';
+        } catch {
+          saveState.textContent = '保存失败（dev 服务没在运行？）';
+        }
+      }, 350);
+    };
+
+    board.querySelectorAll<HTMLElement>('.tier-body').forEach((body) => {
+      new Sortable(body, {
+        group: 'tiers',
+        animation: 160,
+        draggable: '.tcard',
+        filter: '.tcard-zoom',
+        preventOnFilter: false,
+        ghostClass: 'tcard-ghost',
+        chosenClass: 'tcard-chosen',
+        dragClass: 'tcard-drag',
+        delayOnTouchOnly: false,
+        touchStartThreshold: 6,
+        onSort: save,
       });
-      board.addEventListener('dblclick', (e) => {
-        const card = (e.target as HTMLElement).closest<HTMLElement>('.tcard');
-        if (card?.dataset.href) location.href = card.dataset.href;
-      });
-      addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && location.hash.startsWith('#z-')) location.hash = '_';
-      });
-    </script>
-  )}
+    });
+
+    // 双击卡片进详情；Esc 关灯箱
+    board.addEventListener('dblclick', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.tcard');
+      if (card?.dataset.href) location.href = card.dataset.href;
+    });
+    addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && location.hash.startsWith('#z-')) location.hash = '_';
+    });
+  </script>
 </Base>

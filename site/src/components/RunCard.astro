@@ -1,0 +1,137 @@
+---
+// 答卷卡片：普通卡整张是链接；feature（第 1 名）是 article，封面链接 + 详情面板。
+// 封面由页面 JS 按 gallery[data-cover] 切换 img[data-desktop]/[data-mobile]。
+import { baseUrl, workUrl, type Run, type Theme } from '../data';
+import { fmtBytes, fmtCost, fmtDuration, fmtTokens } from '../format';
+
+interface Props {
+  run: Run;
+  theme: Theme;
+  feature?: boolean;
+  /** feature 卡"和第 2 名对比"链接指向的 run id（没有就不渲染该按钮） */
+  compareId?: string;
+}
+
+const { run, theme, feature = false, compareId } = Astro.props;
+
+const view = baseUrl(`${theme.id}/view/${run.id}/`);
+const desktopSrc = run.coverDesktop ? `${workUrl(theme.id, run.id)}${run.coverDesktop}` : undefined;
+const mobileSrc = run.coverMobile
+  ? `${workUrl(theme.id, run.id)}${run.coverMobile}`
+  : desktopSrc;
+const hasCover = !!desktopSrc;
+const blankTitle = run.hasDist ? '没有封面' : '没有交卷';
+const domains = run.stats.externalDomains ?? [];
+---
+
+{
+  feature ? (
+    <article
+      class="card card--feature"
+      data-harness={run.harness}
+      data-model={run.modelKey}
+      data-effort={run.effort}
+    >
+      <a class="shot" href={view} aria-label={`打开 ${run.modelName} 的答卷`}>
+        {hasCover ? (
+          <img
+            src={desktopSrc}
+            data-desktop={desktopSrc}
+            data-mobile={mobileSrc}
+            alt={`${run.modelName} 的答卷封面`}
+            loading="lazy"
+            width="800"
+            height="500"
+          />
+        ) : (
+          <span class="blank">
+            <span class="blank-title">{blankTitle}</span>
+            {run.reasons.length > 0 && <span class="blank-why">{run.reasons.join('；')}</span>}
+          </span>
+        )}
+      </a>
+      <div class="feat-info">
+        <span class="kicker">第 {run.place ?? 1} 名</span>
+        <h2 class="feat-name">{run.modelName}</h2>
+        <p class="feat-sub">
+          {run.harnessName} · <span class="mono">{run.effort}</span>
+          {run.status !== 'ok' && <b class="inc"> · 未完成</b>}
+        </p>
+        <dl class="feat-dl">
+          <div>
+            <dt>用时</dt>
+            <dd>{fmtDuration(run.stats.durationMs)}</dd>
+          </div>
+          <div>
+            <dt>Token</dt>
+            <dd>{fmtTokens(run.stats.tokensIn, run.stats.tokensOut)}</dd>
+          </div>
+          <div>
+            <dt>成本</dt>
+            <dd>{fmtCost(run.stats.costUsd)}</dd>
+          </div>
+          <div>
+            <dt>产物大小</dt>
+            <dd>{fmtBytes(run.stats.distBytes)}</dd>
+          </div>
+          <div>
+            <dt>控制台报错</dt>
+            <dd>{run.stats.consoleErrors === undefined ? '—' : run.stats.consoleErrors}</dd>
+          </div>
+          <div>
+            <dt>外部域名</dt>
+            <dd title={domains.length ? domains.join('\n') : undefined}>
+              {domains.length ? `${domains.length} 个` : '无'}
+            </dd>
+          </div>
+        </dl>
+        <div class="feat-actions">
+          <a class="btn btn--solid" href={view}>打开答卷</a>
+          {compareId && (
+            <a class="btn" href={baseUrl(`${theme.id}/compare/?a=${run.id}&b=${compareId}`)}>
+              和第 2 名对比
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  ) : (
+    <a
+      class="card"
+      href={view}
+      data-harness={run.harness}
+      data-model={run.modelKey}
+      data-effort={run.effort}
+    >
+      <div class="shot">
+        {hasCover ? (
+          <img
+            src={desktopSrc}
+            data-desktop={desktopSrc}
+            data-mobile={mobileSrc}
+            alt={`${run.modelName} 的答卷封面`}
+            loading="lazy"
+            width="640"
+            height="400"
+          />
+        ) : (
+          <span class="blank">
+            <span class="blank-title">{blankTitle}</span>
+            {run.reasons.length > 0 && <span class="blank-why">{run.reasons.join('；')}</span>}
+          </span>
+        )}
+      </div>
+      <div class="cap">
+        {run.place !== undefined && <span class="place mono">#{run.place}</span>}
+        <span class="cap-name">
+          <strong>{run.modelName}</strong>
+        </span>
+        <span class="cap-sub">
+          {run.harnessName} · <span class="mono">{run.effort}</span>
+          {run.status !== 'ok' && <b class="inc"> · 未完成</b>}
+        </span>
+        <span class="dur mono">{fmtDuration(run.stats.durationMs)}</span>
+      </div>
+    </a>
+  )
+}
