@@ -10,6 +10,9 @@ export const themesDir = join(repoRoot, 'themes');
 export const dataDir = join(repoRoot, 'data');
 export const workspacesRoot = join(homedir(), 'gallery3d-workspaces');
 
+/** 题目自带的参考资料目录名：themes/<id>/reference/ → 工作区根目录 reference/ */
+export const REFERENCE_DIR = 'reference';
+
 export function themeDir(themeId: string): string {
   return join(themesDir, themeId);
 }

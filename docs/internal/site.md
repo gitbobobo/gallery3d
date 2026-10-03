@@ -5,7 +5,7 @@ Astro 静态站（`output: 'static'`），把 `themes/` 下每道题的答卷收
 ## 页面（IA）
 
 - `/` 题目列表：wordmark、聚合统计、分类 seg（≥2 个分类时才渲染）、每题一个编辑块（标题/prompt/统计 + 封面 mosaic + 名口角标）。
-- `/[themeId]/` 画廊页：prompt 卡（含「每份答卷都拿到同一份约束」details）、筛选行（agent/模型/强度 + 桌面|手机封面切换）、按等级分组的答卷墙、底部「数据对照」全量表。
+- `/[themeId]/` 画廊页：prompt 卡（有 reference/ 图片时附参考图缩略图，含「每份答卷都拿到同一份约束」details）、筛选行（agent/模型/强度 + 桌面|手机封面切换）、按等级分组的答卷墙、底部「数据对照」全量表。
 - `/[themeId]/view/[runId]/` 单份答卷：sandbox iframe 嵌产物、桌面/手机尺寸切换（≤720px 隐藏切换钮，视口本身已是窄屏）、信息抽屉（元数据 + NOTES.md）、上/下一份导航。
 - `/[themeId]/compare/` 双栏对比：两个独立 select（按等级分组），选择状态在 `?a=&b=` query 里可分享；窄屏只显示一栏 + 左/右切换，尺寸切换同样 ≤720px 隐藏。
 - `/[themeId]/rank/` 仅 dev：SortableJS 拖拽评级，松手 POST `__api/rate` 写回 `ratings.json`。生产构建 `getStaticPaths` 返回 `[]`，不出页面。
@@ -16,6 +16,10 @@ Astro 静态站（`output: 'static'`），把 `themes/` 下每道题的答卷收
 themes/<themeId>/
   theme.json     { id?, title, category, tags, lang?, allowExternalAssets?, promptSha256?, createdAt? }
   prompt.md      原文（去掉首尾空白后展示）
+  reference/     可选，题目自带的参考资料（如看图作画的原画）。CLI 建工作区时原样复制到
+                 工作区根目录 reference/，导入时不进源码快照；站点把其中的图片同步到
+                 works/<themeId>/reference/，在画廊页题目卡里展示。不参与 promptSha256，
+                 有答卷后同样视为锁定，要换图就新建题目
   ratings.json   { tiers: [{id,label,color}], rows: { tierId: [runId, ...] } }
                  rows 数组顺序即同等级内名次；缺文件时用 DEFAULT_TIERS
   runs/<runId>/

@@ -9,6 +9,7 @@ import {
   baseUrl,
   facetValues,
   loadThemes,
+  referenceUrl,
   themeSummary,
   tierGroups,
   type Theme,
@@ -78,6 +79,19 @@ const statsParts = [
             题目{theme.meta.promptSha256 && <> · 编号 <span class="mono">{sha8(theme.meta.promptSha256)}</span></>}
           </span>
           <p class:list={['prompt-text', { 'prompt-text--long': theme.prompt.length > 300 }]}>{theme.prompt || '（这道题没有 prompt.md）'}</p>
+          {theme.references.length > 0 && (
+            <div class="refs">
+              <span class="kicker">参考图（随题下发到 reference/）</span>
+              <div class="refs-row">
+                {theme.references.map((f) => (
+                  <a class="ref" href={referenceUrl(theme.id, f)} target="_blank" rel="noopener">
+                    <img src={referenceUrl(theme.id, f)} alt={`参考图 ${f}`} decoding="async" />
+                    <span class="ref-name mono">{f}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           <details>
             <summary>每份答卷都拿到同一份约束（AGENTS.md）</summary>
             <div class="notes" set:html={renderMd(AGENTS_MD)} />

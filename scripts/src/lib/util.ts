@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { REFERENCE_DIR } from './paths.ts';
 
 export function readJson<T = unknown>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
@@ -68,6 +69,8 @@ export function copySourceSnapshot(srcRoot: string, destRoot: string): string[] 
       if (parts.some((p) => SRC_EXCLUDE_DIRS.has(p))) return false;
       if (SRC_EXCLUDE_FILES.has(name)) return false;
       if (parts.length === 1 && ROOT_ARTIFACT_RE.test(name)) return false;
+      // 题目下发的参考资料，留在 themes/<id>/reference/ 一份就够
+      if (parts[0] === REFERENCE_DIR) return false;
       if (isSecretish(name)) {
         skippedSecrets.push(rel);
         return false;

@@ -3,6 +3,7 @@
 // Directory layout (read-only inputs):
 //   themes/<themeId>/theme.json   theme metadata
 //   themes/<themeId>/prompt.md    verbatim prompt text (Chinese)
+//   themes/<themeId>/reference/*  optional reference images handed to agents
 //   themes/<themeId>/runs/<runId>/run.json
 //   themes/<themeId>/runs/<runId>/dist/index.html ...
 //   themes/<themeId>/runs/<runId>/thumb.webp / thumb-mobile.webp / NOTES.md
@@ -33,6 +34,10 @@ export const baseUrl = (p = ''): string => BASE + p.replace(/^\/+/, '');
 /** URL of a synced run directory, e.g. `${BASE}works/watch-movement/r1/` */
 export const workUrl = (themeId: string, runId: string): string =>
   baseUrl(`works/${themeId}/${runId}/`);
+
+/** URL of a theme reference file synced from themes/<id>/reference/ */
+export const referenceUrl = (themeId: string, file: string): string =>
+  baseUrl(`works/${themeId}/reference/${encodeURIComponent(file)}`);
 
 /** Explicit index.html entry — directory URLs 404 under astro dev. */
 export const workEntry = (themeId: string, runId: string): string =>
@@ -116,9 +121,19 @@ export interface Theme {
   id: string;
   meta: ThemeMeta;
   prompt: string;
+  /** themes/<id>/reference/ 里的参考图文件名（下发给答题 agent 的同一批图） */
+  references: string[];
   runs: Run[];
   ratings: Ratings;
 }
+
+const IMAGE_EXT = /\.(jpe?g|png|webp|avif|gif)$/i;
+
+const readReferences = (themeDir: string): string[] => {
+  const dir = join(themeDir, 'reference');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((f) => IMAGE_EXT.test(f)).sort();
+};
 
 /** 默认等级表（无 ratings.json 时使用），meme 式自上而下 */
 export const DEFAULT_TIERS: Tier[] = [
@@ -329,6 +344,7 @@ const readTheme = (dirName: string, names: DisplayMaps): Theme | null => {
       createdAt: str(j.createdAt),
     },
     prompt,
+    references: readReferences(themeDir),
     runs,
     ratings,
   };

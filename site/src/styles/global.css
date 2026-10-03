@@ -322,6 +322,13 @@ select.sel {
   word-break: break-word;
 }
 .prompt-text--long { font-size: 17px; }
+.refs { margin-top: 14px; }
+.refs-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.ref { display: flex; flex-direction: column; gap: 4px; }
+.ref img { height: 180px; width: auto; border: 1px solid var(--rule-sheet); background: var(--screen); }
+.ref-name { font-size: 11px; color: var(--ink-2); }
+.ref:hover { text-decoration: none; }
+.ref:hover .ref-name { color: var(--ink); text-decoration: underline; }
 .prompt-sheet details { margin-top: 10px; }
 .prompt-sheet summary {
   cursor: pointer;

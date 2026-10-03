@@ -5,11 +5,14 @@
 //   themes/<themeId>/runs/<runId>/dist/**            built page, served verbatim
 //   themes/<themeId>/runs/<runId>/thumb.webp         1440x900 desktop cover
 //   themes/<themeId>/runs/<runId>/thumb-mobile.webp  390x844 mobile cover
+//   themes/<themeId>/reference/**                     optional reference images
 //
 // Output layout (served at `${BASE_URL}works/<themeId>/<runId>/`):
 //   public/works/<themeId>/<runId>/**          <- contents of dist/ (verbatim)
 //   public/works/<themeId>/<runId>/cover.<ext>        <- thumb.webp|png, renamed
 //   public/works/<themeId>/<runId>/cover-mobile.<ext> <- thumb-mobile.webp|png
+//   public/works/<themeId>/reference/**        <- reference/ (runIds always
+//   contain `__`, so this never collides with a run dir)
 //   to avoid collisions with files inside dist/. (.png is tolerated because the
 //   importer may emit png instead of webp.)
 //
@@ -44,6 +47,8 @@ for (const themeId of readdirSync(themesDir)) {
   const themeDir = join(themesDir, themeId);
   if (!statSync(themeDir).isDirectory() || !existsSync(join(themeDir, 'theme.json'))) continue;
   themeCount++;
+  const refDir = join(themeDir, 'reference');
+  if (existsSync(refDir)) cpSync(refDir, join(outRoot, themeId, 'reference'), { recursive: true });
   const runsDir = join(themeDir, 'runs');
   if (!existsSync(runsDir)) continue;
   for (const runId of readdirSync(runsDir)) {

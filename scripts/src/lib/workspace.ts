@@ -2,10 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { workspacesRoot } from './paths.ts';
+import { REFERENCE_DIR, themeDir, workspacesRoot } from './paths.ts';
 import { markerSchema } from './schemas.ts';
 import type { Combo, Marker } from './schemas.ts';
-import { newWorkspaceId, readJson, writeJson } from './util.ts';
+import { copyDir, newWorkspaceId, readJson, writeJson } from './util.ts';
 import type { Adapter } from '../adapters/types.ts';
 
 const templatePath = join(dirname(fileURLToPath(import.meta.url)), '..', 'templates', 'agents-md.md');
@@ -39,6 +39,8 @@ export function prepareWorkspace(opts: {
   execFileSync('git', ['init', '-q'], { cwd: ws });
 
   writeFileSync(join(ws, 'AGENTS.md'), renderAgentsMd(opts.allowExternalAssets));
+  const refDir = join(themeDir(opts.themeId), REFERENCE_DIR);
+  if (existsSync(refDir)) copyDir(refDir, join(ws, REFERENCE_DIR));
   for (const f of opts.adapter.extraFiles?.(ws) ?? []) {
     writeFileSync(join(ws, f.path), f.content);
   }
