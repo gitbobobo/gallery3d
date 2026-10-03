@@ -1,0 +1,27 @@
+{
+  "runId": "devin__swe-2__high",
+  "theme": "xishan-travelers",
+  "harness": "devin",
+  "model": "swe-2-high",
+  "effort": "high",
+  "modelArg": "swe-2-high",
+  "harnessVersion": "devin 3000.11.3 (9c803229faa4)",
+  "manual": false,
+  "promptSha256": "8a24e96f7a1e301fe769adfbef4924e9d1cd5d0b686afec2269150e059dc84d6",
+  "preparedAt": "2026-10-02T21:21:32.265Z",
+  "launchedAt": "2026-10-02T21:21:32.287Z",
+  "finishedAt": "2026-10-02T21:36:50.118Z",
+  "importedAt": "2026-10-02T21:36:59.533Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 917831,
+    "costUsd": null,
+    "tokensIn": 11141685,
+    "tokensOut": 79473,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 39642
+  },
+  "notes": true
+}

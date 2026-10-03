@@ -1,0 +1,27 @@
+{
+  "runId": "claude-code-minimax__minimax-m3__xhigh",
+  "theme": "xishan-travelers",
+  "harness": "claude-code-minimax",
+  "model": "minimax-m3",
+  "effort": "xhigh",
+  "modelArg": null,
+  "harnessVersion": "2.1.285 (Claude Code)",
+  "manual": false,
+  "promptSha256": "8a24e96f7a1e301fe769adfbef4924e9d1cd5d0b686afec2269150e059dc84d6",
+  "preparedAt": "2026-10-02T21:15:02.159Z",
+  "launchedAt": "2026-10-02T21:15:02.211Z",
+  "finishedAt": "2026-10-02T21:52:39.038Z",
+  "importedAt": "2026-10-02T21:52:46.417Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2256827,
+    "costUsd": 19.911134999999994,
+    "tokensIn": 2383487,
+    "tokensOut": 119955,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 54555
+  },
+  "notes": true
+}

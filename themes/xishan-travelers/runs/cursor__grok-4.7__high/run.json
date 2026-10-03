@@ -1,0 +1,27 @@
+{
+  "runId": "cursor__grok-4.7__high",
+  "theme": "xishan-travelers",
+  "harness": "cursor",
+  "model": "grok-4.7-high",
+  "effort": "high",
+  "modelArg": "grok-4.7-high",
+  "harnessVersion": "2026.10.01-14929f9",
+  "manual": false,
+  "promptSha256": "8a24e96f7a1e301fe769adfbef4924e9d1cd5d0b686afec2269150e059dc84d6",
+  "preparedAt": "2026-10-02T21:37:08.403Z",
+  "launchedAt": "2026-10-02T21:37:11.552Z",
+  "finishedAt": "2026-10-02T22:21:49.359Z",
+  "importedAt": "2026-10-02T22:21:56.485Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2677807,
+    "costUsd": null,
+    "tokensIn": null,
+    "tokensOut": null,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 43309
+  },
+  "notes": true
+}

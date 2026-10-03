@@ -1,0 +1,30 @@
+{
+  "runId": "droid__sonnet-5.5__high",
+  "theme": "xishan-travelers",
+  "harness": "droid",
+  "model": "claude-sonnet-5-5",
+  "effort": "high",
+  "modelArg": "claude-sonnet-5-5",
+  "harnessVersion": "0.232.0",
+  "manual": false,
+  "promptSha256": "8a24e96f7a1e301fe769adfbef4924e9d1cd5d0b686afec2269150e059dc84d6",
+  "preparedAt": "2026-10-02T21:00:04.387Z",
+  "launchedAt": "2026-10-02T21:00:04.535Z",
+  "finishedAt": "2026-10-02T21:21:17.410Z",
+  "importedAt": "2026-10-02T21:21:28.151Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 1272875,
+    "costUsd": null,
+    "tokensIn": 76,
+    "tokensOut": 133903,
+    "consoleErrors": 0,
+    "externalDomains": [
+      "fonts.googleapis.com",
+      "fonts.gstatic.com"
+    ],
+    "distBytes": 83534
+  },
+  "notes": true
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#e5dfd2">
+    <meta name="description" content="以代码重绘范宽《溪山行旅图》。晨雾、行旅、钟声、入山，四幕水墨故事。">
+    <title>溪山行旅 · 一卷会呼吸的山水</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="#painting" aria-label="溪山行旅，回到画卷"><span class="seal-small">山</span>溪山行旅<span class="wordmark-note">水墨叙事</span></a>
+      <div class="controls">
+        <button id="sound" aria-label="开启山水声音" aria-pressed="false" title="声音">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5 5 9H2v6h3l5 4V5Z"/><path class="sound-wave" d="M14 8c3 2 3 6 0 8M17 5c5 4 5 10 0 14"/><path class="sound-slash" d="m14 10 6 6m0-6-6 6"/></svg>
+          <span id="sound-label">声音关</span>
+        </button>
+        <span class="control-divider"></span>
+        <button id="play" aria-label="暂停故事" aria-pressed="false" title="空格键暂停">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-icon" d="M8 5v14M16 5v14"/></svg>
+          <span id="play-label">暂停</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="painting">
+      <h1 class="mobile-heading">溪山行旅图</h1>
+      <aside class="intro" aria-label="作品介绍">
+        <div class="intro-top"><span class="small-rule"></span><span>北宋 · 范宽</span></div>
+        <h1>溪山<br>行旅图</h1>
+        <p class="intro-poem">山高不语，<br>人行其间。</p>
+        <div class="intro-bottom">
+          <span class="vermilion-seal">溪<br>山</span>
+          <p>绢本水墨 · 代码重绘<br><span>一卷山水，四幕光阴</span></p>
+        </div>
+      </aside>
+
+      <section class="scroll-stage" aria-label="自动播放的水墨山水画">
+        <div class="scroll-cap cap-top"></div>
+        <div class="painting-frame">
+          <canvas id="landscape" width="1000" height="2000" role="img" aria-label="巨大的主峰、细瀑布、云雾、林间寺院、溪水小路和前景山石。一队四头驮骡的商旅在山脚行走。"></canvas>
+          <div class="painting-edge"></div>
+          <div class="art-mark" aria-hidden="true"><span>溪山行旅</span><i>北宋</i></div>
+          <div id="signature" role="img" aria-label="范宽落款">范<br>宽</div>
+          <div class="paused-mark" id="paused-mark" hidden>静观山水</div>
+        </div>
+        <div class="scroll-cap cap-bottom"></div>
+      </section>
+
+      <aside class="narrative" aria-label="故事字幕">
+        <p class="story-eyebrow">画中一日</p>
+        <div class="chapter-head"><span id="chapter-number">壹</span><span class="chapter-rule"></span><h2 id="chapter-title">晨雾</h2></div>
+        <div class="subtitle-wrap" aria-live="polite" aria-atomic="true">
+          <p id="subtitle">山色初醒，溪声尚远。<br>一缕晨光，慢慢拨开千重雾。</p>
+        </div>
+        <nav class="chapters" aria-label="选择故事章节">
+          <button class="chapter active" data-chapter="0" aria-label="第一幕，晨雾" aria-current="step"><span class="chapter-dot"></span><span>晨雾</span></button>
+          <button class="chapter" data-chapter="1" aria-label="第二幕，行旅"><span class="chapter-dot"></span><span>行旅</span></button>
+          <button class="chapter" data-chapter="2" aria-label="第三幕，钟声"><span class="chapter-dot"></span><span>钟声</span></button>
+          <button class="chapter" data-chapter="3" aria-label="第四幕，入山"><span class="chapter-dot"></span><span>入山</span></button>
+        </nav>
+        <div class="time-track" aria-hidden="true"><div id="progress"></div></div>
+        <p class="story-footnote"><span class="live-dot"></span><span id="play-status">故事自动循环</span><span class="story-duration">01:20</span></p>
+      </aside>
+    </main>
+    <footer><span>以墨写山，以时入画</span><span class="footer-right">观山 · 听水 · 随行</span></footer>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

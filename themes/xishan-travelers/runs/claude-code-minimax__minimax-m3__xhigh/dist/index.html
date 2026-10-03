@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>溪山行旅图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #0e0a06;
+    font-family: "Songti SC", "STSong", "SimSun", "FangSong", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+    color: #2b2218;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at center, #1a130b 0%, #050302 100%);
+  }
+  #frame {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* Subtle scroll/aged frame around the painting */
+  #frame::before, #frame::after {
+    content: ""; position: absolute; pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.55) 100%);
+  }
+  #frame::before { inset: -2vmin; }
+  #frame::after { inset: 0; box-shadow: inset 0 0 80px rgba(0,0,0,0.4); }
+  canvas#painting {
+    display: block;
+    background: #b89766;
+    box-shadow:
+      0 0 0 1px rgba(60,40,20,0.6),
+      0 0 1px 4px rgba(30,18,8,0.5),
+      0 30px 80px rgba(0,0,0,0.75);
+  }
+  .ui {
+    position: absolute; pointer-events: none;
+    text-shadow: 0 0 14px rgba(220,200,170,0.5), 0 0 4px rgba(245,225,190,0.4);
+  }
+  #act {
+    top: 5vh; left: 50%; transform: translateX(-50%);
+    font-family: "STKaiti", "Kaiti SC", "KaiTi", "BiauKai", serif;
+    font-size: clamp(15px, 2.2vw, 26px);
+    letter-spacing: 0.8em;
+    padding-left: 0.8em;
+    color: rgba(35, 25, 14, 0.78);
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    white-space: nowrap;
+  }
+  #subtitle {
+    bottom: 6vh; left: 50%; transform: translateX(-50%);
+    max-width: 80vw;
+    font-family: "STKaiti", "Kaiti SC", "KaiTi", serif;
+    font-size: clamp(14px, 1.9vw, 22px);
+    letter-spacing: 0.35em;
+    line-height: 1.9;
+    text-align: center;
+    color: rgba(35, 25, 14, 0.82);
+    opacity: 0;
+    transition: opacity 0.9s ease;
+  }
+  .ui.visible { opacity: 1; }
+  #corner {
+    bottom: 2.2vh; right: 2.5vw;
+    font-family: "STKaiti", "Kaiti SC", serif;
+    font-size: clamp(10px, 1.1vw, 14px);
+    letter-spacing: 0.3em;
+    color: rgba(40,30,18,0.45);
+  }
+  /* loading */
+  #loading {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #0e0a06;
+    color: #c9a878;
+    z-index: 10;
+    transition: opacity 0.8s ease;
+  }
+  #loading.gone { opacity: 0; pointer-events: none; }
+  #loading .spin {
+    width: 28px; height: 28px;
+    border: 2px solid rgba(201,168,120,0.25);
+    border-top-color: #c9a878;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="frame">
+      <canvas id="painting"></canvas>
+      <div class="ui" id="act"></div>
+      <div class="ui" id="subtitle"></div>
+      <div class="ui" id="corner">北宋 · 范宽</div>
+    </div>
+  </div>
+  <div id="loading"><div class="spin"></div><span>展卷中…</span></div>
+
+<script>
+"use strict";
+(function () {
+  // ============ Canvas & coordinate system ============
+  const LW = 600, LH = 1200;            // logical canvas (vertical, 1:2)
+  const canvas = document.getElementById('painting');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  canvas.width = LW; canvas.height = LH;
+
+  // Static offscreen canvas (re-drawn once)
+  const staticCanvas = document.createElement('canvas');
+  staticCanvas.width = LW; staticCanvas.height = LH;
+  const sCtx = staticCanvas.getContext('2d', { alpha: false });
+
+  // ============ Deterministic RNG (so the painting is stable) ============
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+  const rng = makeRng(20260524);
+  const rand = () => rng();
+  const randRange = (a, b) => a + (b - a) * rand();
+  const randInt = (a, b) => Math.floor(randRange(a, b + 1));
+
+  // ============ Noise ============
+  // Hash-based 2D value noise + FBM
+  function hash2(x, y) {
+    let h = (x | 0) * 374761393 + (y | 0) * 668265263;
+    h = (h ^ (h >>> 13)) * 1274126177;
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function smooth(t) { return t * t * (3 - 2 * t); }
+  function valueNoise(x, y) {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    const fx = x - ix, fy = y - iy;
+    const u = smooth(fx), v = smooth(fy);
+    const a = hash2(ix, iy);
+    const b = hash2(ix + 1, iy);
+    const c = hash2(ix, iy + 1);
+    const d = hash2(ix + 1, iy + 1);
+    return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+  }
+  function fbm(x, y, oct) {
+    let total = 0, amp = 0.5, freq = 1, max = 0;
+    for (let i = 0; i < oct; i++) {
+      total += amp * valueNoise(x * freq, y * freq);
+      max += amp;
+      amp *= 0.5;
+      freq *= 2;
+    }
+    return total / max;
+  }
+
+  // ============ Color helpers ============
+  // Aged silk palette — warm, slightly desaturated
+  const SILK_BASE = [193, 162, 110];      // RGB
+  const INK_DARK = [28, 22, 14];
+  const INK_MID = [62, 50, 34];
+  const INK_LIGHT = [120, 100, 72];
+  const INK_WET = [78, 64, 42];
+
+  function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+  // ============ Shape helpers ============
+  function isInsideMainPeak(x, y) {
+    // Generated mountain shape, defined below in drawMainPeak; reproduced here for queries
+    // The mountain is a polygon. We'll re-derive a point-in-shape test.
+    if (y < 80 || y > 880) return false;
+    const t = (y - 80) / 800; // 0 top, 1 bottom
+    // Left edge approximation
+    const leftEdge = 110 - t * 18 + Math.sin(t * 14) * 14 + Math.sin(t * 41) * 5;
+    // Right edge approximation
+    const rightEdge = 470 + t * 30 + Math.sin(t * 12) * 18 + Math.sin(t * 37) * 6;
+    return x > leftEdge && x < rightEdge;
+  }
+
+  // ============ Layer: Silk base ============
+  function drawSilkBase(g) {
+    const img = g.createImageData(LW, LH);
+    const d = img.data;
+    for (let y = 0; y < LH; y++) {
+      for (let x = 0; x < LW; x++) {
+        const i = (y * LW + x) * 4;
+        // Silk weave (subtle horizontal & vertical threads)
+        const weaveH = Math.sin(y * 1.7) * 0.5 + Math.sin(y * 0.31) * 0.5;
+        const weaveV = Math.sin(x * 1.3) * 0.5 + Math.sin(x * 0.27) * 0.5;
+        // Stain blotches (broad noise)
+        const blot = fbm(x * 0.0035, y * 0.0035, 4);
+        const stain = (blot - 0.5) * 30;
+        // Aging gradient (slightly darker near edges)
+        const edge = Math.max(
+          Math.abs(x - LW / 2) / (LW / 2),
+          Math.abs(y - LH / 2) / (LH / 2)
+        );
+        const edgeDark = Math.pow(edge, 3) * 14;
+        // Fine grain
+        const grain = (rand() - 0.5) * 8;
+
+        const n = stain + weaveH * 1.8 + weaveV * 1.5 - edgeDark + grain;
+        d[i + 0] = Math.max(0, Math.min(255, SILK_BASE[0] + n));
+        d[i + 1] = Math.max(0, Math.min(255, SILK_BASE[1] + n * 0.92));
+        d[i + 2] = Math.max(0, Math.min(255, SILK_BASE[2] + n * 0.72));
+        d[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+
+    // A few faint vertical silk-weave streaks
+    g.globalAlpha = 0.06;
+    g.strokeStyle = '#5a4628';
+    g.lineWidth = 1;
+    for (let i = 0; i < 220; i++) {
+      const x = rand() * LW;
+      const w = randRange(0.3, 1.1);
+      g.lineWidth = w;
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + (rand() - 0.5) * 3, LH);
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+
+  // ============ Layer: Distant sky / faint peaks ============
+  function drawDistantPeaks(g) {
+    // Very faint outline of far peaks behind the main peak
+    g.globalAlpha = 0.5;
+    g.strokeStyle = rgba(INK_LIGHT, 0.5);
+    g.lineWidth = 0.8;
+    g.beginPath();
+    let started = false;
+    for (let x = -10; x <= LW + 10; x += 4) {
+      const y = 200 + fbm(x * 0.012, 0.6, 4) * 90 + Math.sin(x * 0.018) * 18;
+      if (!started) { g.moveTo(x, y); started = true; }
+      else g.lineTo(x, y);
+    }
+    g.stroke();
+    // Light wash below the distant ridge
+    const grad = g.createLinearGradient(0, 200, 0, 350);
+    grad.addColorStop(0, rgba(INK_LIGHT, 0.18));
+    grad.addColorStop(1, rgba(INK_LIGHT, 0));
+    g.fillStyle = grad;
+    g.fillRect(0, 200, LW, 150);
+    g.globalAlpha = 1;
+  }
+
+  // ============ Layer: Main peak ============
+  // Build the peak silhouette once. The peak is shaped by hand-tuned control points
+  // so it has a more dramatic, cliff-like outline (rather than a smooth trapezoid).
+  function buildPeakShape() {
+    // Control points along the silhouette, clockwise from bottom-left.
+    // The first point is repeated at the end so the polygon is closed.
+    const pts = [
+      // Left edge, bottom→top
+      { x: 60, y: 880 }, { x: 70, y: 830 }, { x: 55, y: 770 }, { x: 75, y: 700 },
+      { x: 65, y: 620 }, { x: 80, y: 540 }, { x: 70, y: 470 }, { x: 90, y: 400 },
+      { x: 85, y: 330 }, { x: 105, y: 270 }, { x: 100, y: 220 }, { x: 120, y: 175 },
+      { x: 140, y: 140 }, { x: 165, y: 115 },
+      // Top edge, left→right (connecting from above)
+      { x: 195, y: 100 }, { x: 230, y: 82 }, { x: 265, y: 78 }, { x: 295, y: 90 },
+      { x: 325, y: 72 }, { x: 355, y: 88 }, { x: 380, y: 76 }, { x: 408, y: 95 },
+      { x: 432, y: 88 }, { x: 458, y: 118 },
+      // Right edge, top→bottom
+      { x: 478, y: 160 }, { x: 488, y: 220 }, { x: 478, y: 290 }, { x: 498, y: 360 },
+      { x: 492, y: 430 }, { x: 506, y: 510 }, { x: 498, y: 590 }, { x: 510, y: 670 },
+      { x: 502, y: 750 }, { x: 510, y: 820 }, { x: 500, y: 880 },
+      // Close back to start
+      { x: 60, y: 880 },
+    ];
+    return pts;
+  }
+
+  let peakPoints = buildPeakShape();
+
+  function pointInPolygon(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i].x, yi = poly[i].y;
+      const xj = poly[j].x, yj = poly[j].y;
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-6) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Compute bounding box of the peak
+  function peakBounds(poly) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of poly) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    return { minX, maxX, minY, maxY };
+  }
+
+  function drawMainPeak(g) {
+    const poly = peakPoints;
+    const bb = peakBounds(poly);
+
+    // 1. Base wash fill — light silk tone.
+    g.beginPath();
+    g.moveTo(poly[0].x, poly[0].y);
+    for (let i = 1; i < poly.length; i++) g.lineTo(poly[i].x, poly[i].y);
+    g.closePath();
+    g.fillStyle = rgba([195, 160, 110], 0.72);
+    g.fill();
+
+    // 2. Inner gradient — top is darker, fades to lighter at bottom.
+    g.save();
+    g.clip();
+    const grad = g.createLinearGradient(0, bb.minY, 0, bb.maxY);
+    grad.addColorStop(0, rgba(INK_DARK, 0.48));
+    grad.addColorStop(0.30, rgba(INK_DARK, 0.32));
+    grad.addColorStop(0.65, rgba(INK_DARK, 0.14));
+    grad.addColorStop(1, rgba([195, 160, 110], 0));
+    g.fillStyle = grad;
+    g.fillRect(bb.minX - 5, bb.minY - 5, bb.maxX - bb.minX + 10, bb.maxY - bb.minY + 10);
+    g.restore();
+
+    // 3. Side gradient — left edge lit, right edge darker.
+    g.save();
+    g.clip();
+    const sideGrad = g.createLinearGradient(bb.minX, 0, bb.maxX, 0);
+    sideGrad.addColorStop(0, rgba([225, 190, 140], 0.25));
+    sideGrad.addColorStop(0.35, rgba([180, 145, 105], 0.0));
+    sideGrad.addColorStop(1, rgba(INK_DARK, 0.32));
+    g.fillStyle = sideGrad;
+    g.fillRect(bb.minX - 5, bb.minY - 5, bb.maxX - bb.minX + 10, bb.maxY - bb.minY + 10);
+    g.restore();
+
+    // 4. Cun-fa texture strokes — uniform but with strong noise variation.
+    g.save();
+    g.clip();
+    drawCunFa(g, bb);
+    g.restore();
+
+    // 5. Long dark accent strokes (cliff veins).
+    g.save();
+    g.clip();
+    drawCliffVeins(g, bb);
+    g.restore();
+
+    // 6. Lighter highlight strokes (silk peeking through).
+    g.save();
+    g.clip();
+    drawHighlights(g, bb);
+    g.restore();
+
+    // 7. Ink dots (苔点) — concentrated at top and on ledges.
+    g.save();
+    g.clip();
+    drawInkDots(g, bb);
+    g.restore();
+
+    // 8. The dark crown of foliage at the very top (the iconic Fan-Kuan moss).
+    drawDarkCrown(g, bb);
+
+    // 9. Outline emphasis along the top silhouette only — skip the bottom edge
+    //    so the foot peaks can seamlessly merge with the mountain base.
+    g.save();
+    g.beginPath();
+    g.moveTo(poly[0].x, poly[0].y);
+    // Walk from first point up the left edge and across the top, then down
+    // the right edge. Stop before the bottom return to first point.
+    let lastRightIdx = poly.length - 1;
+    for (let i = 1; i < poly.length; i++) {
+      if (poly[i].y > 870) { lastRightIdx = i - 1; break; }
+      g.lineTo(poly[i].x, poly[i].y);
+    }
+    g.lineWidth = 1.6;
+    g.strokeStyle = rgba(INK_DARK, 0.78);
+    g.stroke();
+    g.restore();
+
+    // 10. Waterfall rock crack (thin dark line, the water itself is drawn later).
+    drawWaterfallCrack(g);
+
+    // 11. Foot peaks (rocky outcrops at the base of the main peak).
+    drawFootPeaks(g, bb);
+  }
+
+  // Vertical shadow bands — subtle dark washes suggesting cliff faces in shadow.
+  function drawShadowBands(g, bb) {
+    const poly = peakPoints;
+    const bands = [
+      { cx: 105, cy: 580, w: 50, h: 280, alpha: 0.14, angle: 0.1 },
+      { cx: 200, cy: 500, w: 45, h: 320, alpha: 0.16, angle: -0.05 },
+      { cx: 300, cy: 550, w: 55, h: 280, alpha: 0.18, angle: 0.08 },
+      { cx: 390, cy: 620, w: 40, h: 220, alpha: 0.14, angle: -0.04 },
+      { cx: 460, cy: 660, w: 45, h: 180, alpha: 0.16, angle: 0.05 },
+    ];
+    for (const b of bands) {
+      // Build an irregular elongated ellipse for the shadow zone.
+      g.save();
+      g.translate(b.cx, b.cy);
+      g.rotate(b.angle);
+      // Use multiple overlapping ellipses with varying alpha for an organic edge.
+      for (let k = 0; k < 4; k++) {
+        const offsetY = (k - 1.5) * b.h * 0.22;
+        const rx = b.w * (0.7 + (k % 2) * 0.2) + (rand() - 0.5) * 8;
+        const ry = b.h * (0.18 + rand() * 0.12);
+        const a = b.alpha * (0.6 + (k % 2) * 0.3);
+        const grad = g.createRadialGradient(0, offsetY, 0, 0, offsetY, Math.max(rx, ry));
+        grad.addColorStop(0, rgba(INK_DARK, a));
+        grad.addColorStop(0.7, rgba(INK_DARK, a * 0.4));
+        grad.addColorStop(1, rgba(INK_DARK, 0));
+        g.fillStyle = grad;
+        g.beginPath();
+        g.ellipse(0, offsetY, rx, ry, 0, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+    }
+  }
+
+  // Darker shadow zones (crevices, under overhangs). Smaller, more focused.
+  function drawShadowZones(g, bb) {
+    const zones = [
+      { x: 380, y: 280, rx: 35, ry: 55, alpha: 0.35 },
+      { x: 175, y: 280, rx: 30, ry: 50, alpha: 0.30 },
+      { x: 285, y: 480, rx: 40, ry: 60, alpha: 0.32 },
+      { x: 450, y: 600, rx: 30, ry: 65, alpha: 0.28 },
+      { x: 130, y: 720, rx: 25, ry: 40, alpha: 0.25 },
+      { x: 380, y: 720, rx: 30, ry: 45, alpha: 0.28 },
+    ];
+    for (const z of zones) {
+      const grad = g.createRadialGradient(z.x, z.y, 0, z.x, z.y, Math.max(z.rx, z.ry));
+      grad.addColorStop(0, rgba(INK_DARK, z.alpha));
+      grad.addColorStop(1, rgba(INK_DARK, 0));
+      g.fillStyle = grad;
+      g.beginPath();
+      g.ellipse(z.x, z.y, z.rx, z.ry, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  // Cun-fa (texture strokes) — uniform coverage with strong noise-based variation.
+  function drawCunFa(g, bb) {
+    const poly = peakPoints;
+    // Phase 1: Short raindrop strokes (the bulk of cun-fa)
+    const shortTarget = 5200;
+    for (let i = 0; i < shortTarget; i++) {
+      const x = bb.minX - 10 + rand() * (bb.maxX - bb.minX + 20);
+      const y = bb.minY - 5 + rand() * (bb.maxY - bb.minY + 10);
+      if (!pointInPolygon(x, y, poly)) continue;
+      const n = fbm(x * 0.010, y * 0.010, 3);
+      const tVert = 1 - (y - bb.minY) / (bb.maxY - bb.minY);
+      // Strong density variation: some areas dense, some sparse.
+      const threshold = 0.30 + n * 0.60 + tVert * 0.12;
+      if (rand() > threshold) continue;
+      const angle = Math.PI / 2 + (rand() - 0.5) * 0.5 + (n - 0.5) * 0.4;
+      const len = randRange(3, 8) * (0.5 + tVert * 0.5);
+      const darkness = randRange(0.55, 0.90);
+      g.strokeStyle = rgba(INK_DARK, darkness);
+      g.lineWidth = randRange(1.2, 2.2);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(x, y);
+      const mx = x + Math.cos(angle) * len * 0.3 + (rand() - 0.5) * 1.5;
+      const my = y + Math.sin(angle) * len * 0.5;
+      g.quadraticCurveTo(mx, my, x + Math.cos(angle) * len * 0.25, y + Math.sin(angle) * len);
+      g.stroke();
+    }
+    // Phase 2: Longer curving strokes (suggests rounded rocks)
+    const longTarget = 700;
+    for (let i = 0; i < longTarget; i++) {
+      const x = bb.minX + rand() * (bb.maxX - bb.minX);
+      const y = bb.minY + rand() * (bb.maxY - bb.minY);
+      if (!pointInPolygon(x, y, poly)) continue;
+      const n = fbm(x * 0.010, y * 0.010, 3);
+      const tVert = 1 - (y - bb.minY) / (bb.maxY - bb.minY);
+      if (rand() > 0.20 + n * 0.30 + tVert * 0.20) continue;
+      const angle = Math.PI / 2 + (rand() - 0.5) * 0.4;
+      const len = randRange(10, 20);
+      const c1x = x + (rand() - 0.5) * 6;
+      const c1y = y - len * 0.3;
+      const ex = x + Math.cos(angle) * len * 0.2;
+      const ey = y + Math.sin(angle) * len;
+      g.strokeStyle = rgba(INK_DARK, randRange(0.55, 0.85));
+      g.lineWidth = randRange(1.4, 2.2);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(x, y);
+      g.quadraticCurveTo(c1x, c1y, ex, ey);
+      g.stroke();
+    }
+    // Phase 3: Tiny ink dots (苔点 detail)
+    for (let i = 0; i < 500; i++) {
+      const x = bb.minX + rand() * (bb.maxX - bb.minX);
+      const y = bb.minY + rand() * (bb.maxY - bb.minY);
+      if (!pointInPolygon(x, y, poly)) continue;
+      const tFromTop = (y - bb.minY) / (bb.maxY - bb.minY);
+      if (rand() > 0.30 + (1 - tFromTop) * 0.40) continue;
+      const r = randRange(0.7, 1.8);
+      const alpha = randRange(0.55, 0.90);
+      g.fillStyle = rgba(INK_DARK, alpha);
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  // Long darker cliff-vein strokes (vertical accents).
+  function drawCliffVeins(g, bb) {
+    const poly = peakPoints;
+    if (!poly) return;
+    for (let i = 0; i < 36; i++) {
+      const x0 = bb.minX + 10 + rand() * (bb.maxX - bb.minX - 20);
+      const yTop = bb.minY + 5 + rand() * 80;
+      const yBot = yTop + randRange(100, 320);
+      if (!pointInPolygon(x0, yTop, poly) || !pointInPolygon(x0, yBot, poly)) continue;
+      g.strokeStyle = rgba(INK_DARK, randRange(0.35, 0.65));
+      g.lineWidth = randRange(0.7, 1.5);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(x0, yTop);
+      const segs = 8;
+      for (let s = 1; s <= segs; s++) {
+        const tt = s / segs;
+        const px = x0 + Math.sin(tt * 5 + i * 1.3) * 4 * (rand() - 0.3);
+        const py = yTop + (yBot - yTop) * tt;
+        g.lineTo(px, py);
+      }
+      g.stroke();
+    }
+  }
+
+  // Lighter highlight strokes — silk-colored, mostly horizontal, on cliff faces.
+  function drawHighlights(g, bb) {
+    const poly = peakPoints;
+    for (let i = 0; i < 35; i++) {
+      const x = bb.minX + 30 + rand() * (bb.maxX - bb.minX - 60);
+      const y = bb.minY + 50 + rand() * (bb.maxY - bb.minY - 80);
+      if (!pointInPolygon(x, y, poly)) continue;
+      g.strokeStyle = rgba([225, 200, 155], randRange(0.15, 0.32));
+      g.lineWidth = randRange(0.6, 1.2);
+      g.beginPath();
+      const w = randRange(25, 70);
+      g.moveTo(x - w / 2, y);
+      g.quadraticCurveTo(x, y + randRange(-3, 3), x + w / 2, y + randRange(-2, 2));
+      g.stroke();
+    }
+  }
+
+  // Ink dots (苔点), mostly at the top and on ledges.
+  function drawInkDots(g, bb) {
+    const poly = peakPoints;
+    for (let i = 0; i < 550; i++) {
+      const x = bb.minX + rand() * (bb.maxX - bb.minX);
+      const y = bb.minY + rand() * (bb.maxY - bb.minY);
+      if (!pointInPolygon(x, y, poly)) continue;
+      const tFromTop = (y - bb.minY) / (bb.maxY - bb.minY);
+      // Higher density near the top
+      const n = fbm(x * 0.03, y * 0.03, 3);
+      if (rand() > 0.25 + (1 - tFromTop) * 0.50 + n * 0.2) continue;
+      const r = randRange(0.7, 2.4);
+      const alpha = randRange(0.55, 0.95);
+      g.fillStyle = rgba(INK_DARK, alpha);
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  // The dark crown — irregular, very dark moss/foliage masses crowning the peak.
+  function drawDarkCrown(g, bb) {
+    // Hand-placed moss/foliage clusters across the crown of the peak.
+    // Lower (y=200-240) so the dark blobs sit clearly below the bright top edge,
+    // making them visible against the lighter mid-mountain tone.
+    const clusters = [
+      { x: 175, y: 230, rx: 30, ry: 22, blobs: 48, alpha: 0.92 },
+      { x: 210, y: 215, rx: 36, ry: 26, blobs: 60, alpha: 0.95 },
+      { x: 250, y: 200, rx: 42, ry: 30, blobs: 75, alpha: 0.97 },
+      { x: 295, y: 195, rx: 46, ry: 32, blobs: 85, alpha: 0.97 },
+      { x: 340, y: 200, rx: 42, ry: 30, blobs: 78, alpha: 0.97 },
+      { x: 380, y: 215, rx: 36, ry: 26, blobs: 62, alpha: 0.95 },
+      { x: 420, y: 230, rx: 30, ry: 22, blobs: 48, alpha: 0.92 },
+    ];
+    g.save();
+    for (const c of clusters) {
+      // Solid base layer (slightly larger dark patch)
+      const baseGrad = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, Math.max(c.rx, c.ry));
+      baseGrad.addColorStop(0, rgba(INK_DARK, c.alpha * 0.55));
+      baseGrad.addColorStop(0.6, rgba(INK_DARK, c.alpha * 0.30));
+      baseGrad.addColorStop(1, rgba(INK_DARK, 0));
+      g.fillStyle = baseGrad;
+      g.beginPath();
+      g.ellipse(c.x, c.y, c.rx, c.ry, 0, 0, Math.PI * 2);
+      g.fill();
+      // Dense blob layer on top
+      for (let i = 0; i < c.blobs; i++) {
+        const ang = rand() * Math.PI * 2;
+        const rad = Math.pow(rand(), 0.55);
+        const ox = Math.cos(ang) * rad * c.rx;
+        const oy = Math.sin(ang) * rad * c.ry * 0.8;
+        const r = randRange(1.4, 3.2) * (1 - rad * 0.4);
+        const a = c.alpha * (1 - rad * 0.35) * randRange(0.85, 1);
+        g.fillStyle = rgba(INK_DARK, Math.min(1, a));
+        g.beginPath();
+        g.arc(c.x + ox, c.y + oy, r, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+    // Fine dark detail strokes (suggesting twigs / leaves)
+    for (let i = 0; i < 280; i++) {
+      const c = clusters[Math.floor(rand() * clusters.length)];
+      const ang = rand() * Math.PI * 2;
+      const rad = Math.pow(rand(), 0.5);
+      const ox = Math.cos(ang) * rad * c.rx * 1.1;
+      const oy = Math.sin(ang) * rad * c.ry * 0.85;
+      g.strokeStyle = rgba(INK_DARK, randRange(0.55, 0.88));
+      g.lineWidth = randRange(0.4, 0.9);
+      g.beginPath();
+      g.moveTo(c.x + ox, c.y + oy);
+      g.lineTo(c.x + ox + (rand() - 0.5) * 3, c.y + oy + randRange(-1, 3));
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  function drawWaterfallCrack(g) {
+    // Very thin dark rock fissure on the right side — just the crack itself.
+    // The actual water is drawn as a thin white line in the animated layer.
+    const crackX = 415;
+    g.save();
+    g.beginPath();
+    g.moveTo(crackX, 230);
+    let prev = crackX;
+    let y = 230;
+    while (y < 880) {
+      const dx = (rand() - 0.5) * 2;
+      prev += dx;
+      y += 3;
+      g.lineTo(prev, y);
+    }
+    g.lineWidth = 2.4;
+    g.strokeStyle = rgba(INK_DARK, 0.85);
+    g.stroke();
+    // Even thinner inner line for depth
+    g.lineWidth = 0.9;
+    g.strokeStyle = rgba(INK_DARK, 0.95);
+    g.stroke();
+    g.restore();
+  }
+
+  function drawFootPeaks(g, bb) {
+    // Rocky outcrops at the base of the main peak — angular, mountainous, not blob-like.
+    g.save();
+    const peaks = [
+      // left shoulder — broad angular base
+      { baseX: -10, baseY: 920, topX: 65, topY: 800, sideSpread: 90 },
+      // mid-left shoulder
+      { baseX: 110, baseY: 915, topX: 155, topY: 825, sideSpread: 55 },
+      // mid-right shoulder
+      { baseX: 300, baseY: 915, topX: 355, topY: 800, sideSpread: 70 },
+      // far-right shoulder
+      { baseX: 430, baseY: 920, topX: 510, topY: 780, sideSpread: 100 },
+    ];
+    for (const p of peaks) {
+      // 1. Base fill
+      g.fillStyle = rgba(INK_MID, 0.85);
+      g.beginPath();
+      g.moveTo(p.baseX - p.sideSpread * 0.5, p.baseY);
+      const steps = 8;
+      for (let s = 1; s <= steps; s++) {
+        const t = s / steps;
+        const xLerp = p.baseX + (p.topX - p.baseX) * t;
+        const yLerp = p.baseY + (p.topY - p.baseY) * t;
+        const bump = (Math.sin(s * 1.7 + p.topX * 0.1) + (rand() - 0.5)) * p.sideSpread * 0.12 * (1 - t);
+        g.lineTo(xLerp - p.sideSpread * 0.5 * (1 - t) + bump, yLerp);
+      }
+      g.lineTo(p.topX + (rand() - 0.5) * 12, p.topY - randRange(0, 6));
+      for (let s = steps - 1; s >= 0; s--) {
+        const t = s / steps;
+        const xLerp = p.baseX + (p.topX - p.baseX) * t;
+        const yLerp = p.baseY + (p.topY - p.baseY) * t;
+        const bump = (Math.cos(s * 1.3 + p.topX * 0.1) + (rand() - 0.5)) * p.sideSpread * 0.12 * (1 - t);
+        g.lineTo(xLerp + p.sideSpread * 0.5 * (1 - t) + bump, yLerp);
+      }
+      g.lineTo(p.baseX + p.sideSpread * 0.5, p.baseY);
+      g.closePath();
+      g.fill();
+
+      // 2. Inner shading gradient — top is lit (lighter), base is in shadow.
+      g.save();
+      g.clip();
+      const sh = g.createLinearGradient(0, p.topY - 20, 0, p.baseY);
+      sh.addColorStop(0, rgba(INK_MID, 0.0));
+      sh.addColorStop(0.55, rgba(INK_DARK, 0.18));
+      sh.addColorStop(1, rgba(INK_DARK, 0.45));
+      g.fillStyle = sh;
+      g.fillRect(p.baseX - p.sideSpread * 0.5 - 5, p.topY - 30,
+                 p.sideSpread + 10, p.baseY - p.topY + 40);
+      // Highlight on the lit side
+      const lit = g.createLinearGradient(p.baseX - p.sideSpread * 0.5, 0,
+                                         p.baseX + p.sideSpread * 0.5, 0);
+      lit.addColorStop(0, rgba([230, 200, 155], 0.22));
+      lit.addColorStop(0.5, rgba([200, 170, 130], 0));
+      lit.addColorStop(1, rgba(INK_DARK, 0.0));
+      g.fillStyle = lit;
+      g.fillRect(p.baseX - p.sideSpread * 0.5 - 5, p.topY - 30,
+                 p.sideSpread + 10, p.baseY - p.topY + 40);
+      g.restore();
+
+      // 3. Outline
+      g.lineWidth = 1.3;
+      g.strokeStyle = rgba(INK_DARK, 0.78);
+      g.stroke();
+
+      // 4. Cun-fa texture strokes (clipped)
+      g.save();
+      g.clip();
+      const texCount = 110;
+      for (let i = 0; i < texCount; i++) {
+        const t = rand();
+        const x = p.baseX - p.sideSpread * 0.5 + rand() * p.sideSpread * 1.0;
+        const yLerp = p.baseY + (p.topY - p.baseY) * t;
+        const xLerp = p.baseX + (p.topX - p.baseX) * t;
+        const dx = x - xLerp;
+        if (Math.abs(dx) > p.sideSpread * 0.5 * (1 - t)) continue;
+        const angle = Math.PI / 2 + (rand() - 0.5) * 0.4;
+        const len = randRange(2, 5);
+        g.strokeStyle = rgba(INK_DARK, randRange(0.45, 0.75));
+        g.lineWidth = randRange(0.6, 1.1);
+        g.beginPath();
+        g.moveTo(x, yLerp);
+        g.lineTo(x + Math.cos(angle) * len * 0.3, yLerp + Math.sin(angle) * len);
+        g.stroke();
+      }
+      // Ink dots
+      for (let i = 0; i < 22; i++) {
+        const t = rand();
+        const x = p.baseX - p.sideSpread * 0.3 + rand() * p.sideSpread * 0.6;
+        const yLerp = p.baseY + (p.topY - p.baseY) * t;
+        const xLerp = p.baseX + (p.topX - p.baseX) * t;
+        if (Math.abs(x - xLerp) > p.sideSpread * 0.5 * (1 - t)) continue;
+        g.fillStyle = rgba(INK_DARK, randRange(0.5, 0.85));
+        g.beginPath();
+        g.arc(x, yLerp + randRange(-3, 3), randRange(0.5, 1.3), 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+    }
+    g.restore();
+  }
+
+  // ============ Layer: Mid-ground forest and temple ============
+  // Trees & temple are in the lower-right area
+  function drawMidForest(g) {
+    // Background tree silhouettes (further back, lighter)
+    drawTreeCluster(g, 380, 990, 130, 90, 0.30);
+    drawTreeCluster(g, 290, 1010, 100, 70, 0.30);
+    drawTreeCluster(g, 200, 1000, 90, 60, 0.32);
+    drawTreeCluster(g, 470, 1000, 110, 75, 0.30);
+
+    // Mid-layer trees (darker, more detailed)
+    drawTreeCluster(g, 410, 1015, 95, 65, 0.55);
+    drawTreeCluster(g, 340, 1025, 75, 55, 0.55);
+    drawTreeCluster(g, 250, 1015, 70, 50, 0.55);
+    drawTreeCluster(g, 150, 1020, 75, 55, 0.55);
+
+    // Temple — partially hidden behind trees, on right
+    drawTemple(g, 478, 990);
+
+    // Foreground shrub clusters (bottom strip)
+    drawTreeCluster(g, 80, 1055, 90, 35, 0.65);
+    drawTreeCluster(g, 510, 1055, 110, 40, 0.65);
+    drawTreeCluster(g, 220, 1065, 80, 30, 0.65);
+  }
+
+  function drawTreeCluster(g, cx, cy, w, h, alpha) {
+    g.save();
+    // Build several "trees" within the cluster, each with its own position and size.
+    const treeCount = Math.max(3, Math.floor(w / 18));
+    for (let t = 0; t < treeCount; t++) {
+      const tx = cx + (rand() - 0.5) * w;
+      const ty = cy + (rand() - 0.3) * h * 0.5;
+      const treeH = h * randRange(0.5, 1.0);
+      const treeW = w / treeCount * randRange(0.5, 0.9);
+      drawSingleTree(g, tx, ty, treeW, treeH, alpha);
+    }
+    // Underbrush (loose ink dabs between trees)
+    for (let i = 0; i < Math.floor(w * 0.3); i++) {
+      const fx = cx + (rand() - 0.5) * w * 1.2;
+      const fy = cy + (rand() - 0.5) * h * 0.7;
+      const r = randRange(1.5, 3.5);
+      g.fillStyle = rgba(INK_DARK, alpha * randRange(0.4, 0.7));
+      g.beginPath();
+      g.arc(fx, fy, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
+  }
+
+  function drawSingleTree(g, tx, ty, tw, th, alpha) {
+    // Trunk (curving slightly)
+    g.strokeStyle = rgba(INK_DARK, alpha * 0.85);
+    g.lineWidth = randRange(1.2, 2.2);
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(tx, ty);
+    const trunkBend = (rand() - 0.5) * 4;
+    g.quadraticCurveTo(tx + trunkBend, ty - th * 0.5, tx + (rand() - 0.5) * 3, ty - th);
+    g.stroke();
+    // Foliage cluster (multiple overlapping dark blobs, irregular shape)
+    const cx = tx + (rand() - 0.5) * 2;
+    const cy = ty - th;
+    const rx = tw * randRange(0.5, 0.9);
+    const ry = th * randRange(0.35, 0.55);
+    const blobs = Math.floor(rx * ry * 0.3);
+    for (let i = 0; i < blobs; i++) {
+      const ang = rand() * Math.PI * 2;
+      const rad = Math.pow(rand(), 0.7);
+      const ox = Math.cos(ang) * rad * rx;
+      const oy = Math.sin(ang) * rad * ry;
+      const r = randRange(2, 4.5) * (1 - rad * 0.5);
+      g.fillStyle = rgba(INK_DARK, alpha * randRange(0.65, 0.95));
+      g.beginPath();
+      g.arc(cx + ox, cy + oy, r, 0, Math.PI * 2);
+      g.fill();
+    }
+    // Some leaf detail strokes
+    for (let i = 0; i < blobs * 2; i++) {
+      const ang = rand() * Math.PI * 2;
+      const rad = Math.pow(rand(), 0.6);
+      const ox = Math.cos(ang) * rad * rx * 1.1;
+      const oy = Math.sin(ang) * rad * ry * 1.1;
+      g.strokeStyle = rgba(INK_DARK, alpha * 0.7);
+      g.lineWidth = randRange(0.5, 0.9);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(cx + ox, cy + oy);
+      g.lineTo(cx + ox + (rand() - 0.5) * 4, cy + oy + randRange(2, 6));
+      g.stroke();
+    }
+  }
+
+  function drawTemple(g, cx, cy) {
+    // Small pavilion-style temple peeking from the forest
+    g.save();
+    const baseY = cy;
+    const baseW = 50, baseH = 14;
+    // Walls
+    g.fillStyle = rgba([210, 188, 145], 0.85);
+    g.fillRect(cx - baseW / 2, baseY - baseH, baseW, baseH);
+    // Walls shadow / detail
+    g.strokeStyle = rgba(INK_DARK, 0.7);
+    g.lineWidth = 0.7;
+    g.strokeRect(cx - baseW / 2, baseY - baseH, baseW, baseH);
+    // Door
+    g.fillStyle = rgba(INK_DARK, 0.7);
+    g.fillRect(cx - 4, baseY - baseH + 2, 8, baseH - 2);
+    // Window
+    g.fillRect(cx - baseW / 2 + 4, baseY - baseH + 3, 4, 5);
+    g.fillRect(cx + baseW / 2 - 8, baseY - baseH + 3, 4, 5);
+    // Lower roof (sloped, with curved eaves)
+    g.fillStyle = rgba(INK_DARK, 0.85);
+    g.beginPath();
+    g.moveTo(cx - baseW / 2 - 6, baseY - baseH);
+    g.lineTo(cx - baseW / 2 - 2, baseY - baseH - 6);
+    g.lineTo(cx + baseW / 2 + 2, baseY - baseH - 6);
+    g.lineTo(cx + baseW / 2 + 6, baseY - baseH);
+    g.closePath();
+    g.fill();
+    // Upper tier
+    const upW = 32, upH = 10;
+    g.fillStyle = rgba([210, 188, 145], 0.8);
+    g.fillRect(cx - upW / 2, baseY - baseH - 6 - upH, upW, upH);
+    g.strokeStyle = rgba(INK_DARK, 0.7);
+    g.strokeRect(cx - upW / 2, baseY - baseH - 6 - upH, upW, upH);
+    // Top roof
+    g.fillStyle = rgba(INK_DARK, 0.9);
+    g.beginPath();
+    g.moveTo(cx - upW / 2 - 7, baseY - baseH - 6 - upH);
+    g.lineTo(cx - upW / 2 - 2, baseY - baseH - 6 - upH - 7);
+    g.lineTo(cx + upW / 2 + 2, baseY - baseH - 6 - upH - 7);
+    g.lineTo(cx + upW / 2 + 7, baseY - baseH - 6 - upH);
+    g.closePath();
+    g.fill();
+    // Ridge ornament
+    g.fillStyle = rgba(INK_DARK, 0.85);
+    g.beginPath();
+    g.moveTo(cx - 1, baseY - baseH - 6 - upH - 7);
+    g.lineTo(cx + 1, baseY - baseH - 6 - upH - 7);
+    g.lineTo(cx, baseY - baseH - 6 - upH - 11);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
+
+  // ============ Layer: Stream & path ============
+  function drawStreamAndPath(g) {
+    // The stream flows from the foreground center to the right
+    // A light wash of pale silk-cream for the stream bed
+    g.save();
+    g.beginPath();
+    g.moveTo(0, 1110);
+    g.quadraticCurveTo(140, 1118, 260, 1126);
+    g.quadraticCurveTo(380, 1132, 500, 1124);
+    g.lineTo(LW, 1120);
+    g.lineTo(LW, 1150);
+    g.lineTo(0, 1150);
+    g.closePath();
+    g.fillStyle = rgba([225, 200, 160], 0.35);
+    g.fill();
+
+    // Wavy stream lines (suggest water)
+    g.strokeStyle = rgba([60, 45, 28], 0.55);
+    g.lineWidth = 0.8;
+    g.lineCap = 'round';
+    for (let row = 0; row < 3; row++) {
+      g.beginPath();
+      const yBase = 1120 + row * 10;
+      for (let x = 0; x <= LW; x += 4) {
+        const y = yBase + Math.sin(x * 0.05 + row * 0.7) * 1.5 + Math.sin(x * 0.13 + row) * 0.8;
+        if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+
+    // Path (lighter trail on the right of the stream where the caravan walks)
+    g.beginPath();
+    g.moveTo(LW + 5, 1095);
+    g.quadraticCurveTo(500, 1108, 380, 1112);
+    g.quadraticCurveTo(260, 1118, 130, 1130);
+    g.quadraticCurveTo(60, 1140, -5, 1148);
+    g.lineWidth = 6;
+    g.strokeStyle = rgba([180, 150, 110], 0.6);
+    g.stroke();
+    // darker stroke (the path edge)
+    g.beginPath();
+    g.moveTo(LW + 5, 1095);
+    g.quadraticCurveTo(500, 1108, 380, 1112);
+    g.quadraticCurveTo(260, 1118, 130, 1130);
+    g.quadraticCurveTo(60, 1140, -5, 1148);
+    g.lineWidth = 1;
+    g.strokeStyle = rgba([60, 45, 28], 0.5);
+    g.stroke();
+
+    g.restore();
+  }
+
+  // ============ Layer: Foreground rocks ============
+  function drawForegroundRocks(g) {
+    // Large angular rocks in the foreground
+    const rocks = [
+      { x: 75, y: 1175, w: 150, h: 70, tone: 0.55 },
+      { x: 230, y: 1170, w: 100, h: 50, tone: 0.60 },
+      { x: 360, y: 1180, w: 130, h: 65, tone: 0.58 },
+      { x: 480, y: 1170, w: 90, h: 45, tone: 0.62 },
+    ];
+    for (const r of rocks) {
+      drawRock(g, r.x, r.y, r.w, r.h, r.tone);
+    }
+  }
+
+  function drawRock(g, x, y, w, h, tone) {
+    g.save();
+    // Polygon silhouette — irregular, jagged
+    g.beginPath();
+    g.moveTo(x - w / 2, y);
+    const steps = 9;
+    for (let i = 1; i <= steps; i++) {
+      const px = x - w / 2 + (w / steps) * i;
+      // Vary the peak height across the rock for jagged silhouette
+      const peakProfile = Math.sin(i * 1.7 + x * 0.01) * 0.35 +
+                          Math.sin(i * 3.1 + x * 0.005) * 0.20 +
+                          (rand() - 0.4) * 0.35;
+      const py = y - h * Math.max(0.05, 0.4 + peakProfile);
+      g.lineTo(px, py);
+    }
+    g.lineTo(x + w / 2, y);
+    g.closePath();
+    g.fillStyle = rgba(INK_MID, tone);
+    g.fill();
+
+    // Inner shading gradient — lit on the upper-left, dark on the lower-right
+    g.save();
+    g.clip();
+    const litGrad = g.createLinearGradient(x - w / 2, y - h,
+                                            x + w / 2, y);
+    litGrad.addColorStop(0, rgba([230, 200, 155], tone * 0.55));
+    litGrad.addColorStop(0.5, rgba([200, 170, 130], 0));
+    litGrad.addColorStop(1, rgba(INK_DARK, tone * 0.6));
+    g.fillStyle = litGrad;
+    g.fillRect(x - w / 2 - 5, y - h - 5, w + 10, h + 10);
+    // Top edge highlight
+    const topHi = g.createLinearGradient(0, y - h, 0, y - h * 0.3);
+    topHi.addColorStop(0, rgba([235, 210, 170], tone * 0.7));
+    topHi.addColorStop(1, rgba([235, 210, 170], 0));
+    g.fillStyle = topHi;
+    g.fillRect(x - w / 2 - 5, y - h - 5, w + 10, h * 0.5 + 5);
+    g.restore();
+
+    // Outline
+    g.lineWidth = 1.4;
+    g.strokeStyle = rgba(INK_DARK, Math.min(0.95, tone + 0.2));
+    g.stroke();
+
+    // Cun-fa strokes on rock (clipped)
+    g.save();
+    g.clip();
+    for (let i = 0; i < 80; i++) {
+      const sx = x - w / 2 + rand() * w;
+      const sy = y - rand() * h * 0.95;
+      g.strokeStyle = rgba(INK_DARK, randRange(0.3, 0.65) * tone);
+      g.lineWidth = randRange(0.5, 1.2);
+      g.beginPath();
+      g.moveTo(sx, sy);
+      g.lineTo(sx + (rand() - 0.5) * 3, sy + randRange(1, 5));
+      g.stroke();
+    }
+    // Ink dots
+    for (let i = 0; i < 18; i++) {
+      const sx = x - w / 2 + rand() * w;
+      const sy = y - rand() * h * 0.9;
+      g.fillStyle = rgba(INK_DARK, randRange(0.45, 0.75));
+      g.beginPath();
+      g.arc(sx, sy, randRange(0.6, 1.5), 0, Math.PI * 2);
+      g.fill();
+    }
+    g.restore();
+    g.restore();
+  }
+
+  // ============ Caravan data ============
+  // Positions for each traveler along the path. 1 = lead person,
+  // 2-5 = four mules, 6 = rear person.
+  function getCaravanPositions(progress) {
+    // progress 0 → all at start, 1 → all at end.
+    // Start position offscreen-right (x=620), end at x=-30 (offscreen-left).
+    const startX = 610, endX = -30;
+    const baseY = 1095; // along the path
+    const travelers = [];
+    // spacing between travelers
+    const spacing = 22;
+    // total caravan length
+    const totalLen = spacing * 5;
+    // The lead is at progress * (LW + totalLen + 40) - totalLen - 20
+    // So when lead hits endX, the rear is at endX + totalLen
+    const leadX = startX + (endX - totalLen - 20 - startX) * progress;
+    // Define caravan member types
+    const types = [
+      { kind: 'person', role: 'lead' },
+      { kind: 'mule' },
+      { kind: 'mule' },
+      { kind: 'mule' },
+      { kind: 'mule' },
+      { kind: 'person', role: 'rear' },
+    ];
+    for (let i = 0; i < types.length; i++) {
+      const x = leadX + i * spacing;
+      // Slight y-jitter following the path curve
+      const tParam = (x - 130) / (610 - 130); // 0 at left, 1 at right
+      const tClamp = Math.max(0, Math.min(1, tParam));
+      const pathY = 1110 - tClamp * 15; // path slopes up to the right
+      travelers.push({
+        x,
+        y: pathY,
+        type: types[i],
+      });
+    }
+    return travelers;
+  }
+
+  function drawCaravanMember(g, t, paused) {
+    const x = t.x, y = t.y;
+    const kind = t.type.kind;
+    const role = t.type.role;
+    if (kind === 'person') {
+      // Tiny figure: dot for head, line for body, lines for legs
+      // If rear person is "paused", draw him standing upright looking up
+      const lookingUp = paused;
+      const headR = 2.4;
+      // Body
+      g.strokeStyle = rgba(INK_DARK, 0.95);
+      g.lineWidth = 1.6;
+      g.lineCap = 'round';
+      // Legs
+      g.beginPath();
+      g.moveTo(x, y - 2);
+      g.lineTo(x - 3, y + 4);
+      g.moveTo(x, y - 2);
+      g.lineTo(x + 3, y + 4);
+      g.stroke();
+      // Torso
+      g.beginPath();
+      g.moveTo(x, y - 2);
+      g.lineTo(x, y - 11);
+      g.stroke();
+      // Arms
+      g.beginPath();
+      g.moveTo(x - 4, y - 7);
+      g.lineTo(x, y - 6);
+      g.lineTo(x + 4, y - 7);
+      g.stroke();
+      // Head
+      g.fillStyle = rgba(INK_DARK, 0.95);
+      g.beginPath();
+      g.arc(x, y - 13, headR, 0, Math.PI * 2);
+      g.fill();
+      if (lookingUp) {
+        // Hat brim or arm pointing up
+        g.beginPath();
+        g.arc(x, y - 13, headR + 1.5, Math.PI * 0.1, Math.PI * 0.9);
+        g.stroke();
+        // stick pointing up
+        g.lineWidth = 1;
+        g.beginPath();
+        g.moveTo(x + 2, y - 7);
+        g.lineTo(x + 4, y - 18);
+        g.stroke();
+      }
+    } else {
+      // Mule: body, four legs, head, ears
+      g.strokeStyle = rgba(INK_DARK, 0.95);
+      g.fillStyle = rgba(INK_DARK, 0.95);
+      g.lineWidth = 1.4;
+      g.lineCap = 'round';
+      // Body (rounded rectangle / oval)
+      g.beginPath();
+      g.ellipse(x, y - 6, 7, 4, 0, 0, Math.PI * 2);
+      g.fill();
+      // Legs
+      g.beginPath();
+      g.moveTo(x - 5, y - 4);
+      g.lineTo(x - 5, y + 4);
+      g.moveTo(x - 2, y - 4);
+      g.lineTo(x - 2, y + 4);
+      g.moveTo(x + 2, y - 4);
+      g.lineTo(x + 2, y + 4);
+      g.moveTo(x + 5, y - 4);
+      g.lineTo(x + 5, y + 4);
+      g.stroke();
+      // Head
+      g.beginPath();
+      g.ellipse(x + 7, y - 9, 3, 2.5, -0.3, 0, Math.PI * 2);
+      g.fill();
+      // Ear
+      g.beginPath();
+      g.moveTo(x + 9, y - 11);
+      g.lineTo(x + 9, y - 13);
+      g.stroke();
+      // Pack on the back (small box)
+      g.fillStyle = rgba([160, 120, 80], 0.7);
+      g.fillRect(x - 3, y - 11, 6, 4);
+      g.strokeStyle = rgba(INK_DARK, 0.9);
+      g.strokeRect(x - 3, y - 11, 6, 4);
+    }
+  }
+
+  // ============ Birds ============
+  function drawBirds(g, t, progress) {
+    if (progress <= 0) return;
+    // Birds emerge from the trees and fly up & away
+    const cx = 410, cy = 970;
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+      // Stagger takeoff
+      const startDelay = i * 0.08;
+      const birdT = Math.max(0, Math.min(1, (progress - startDelay) * 1.3));
+      if (birdT <= 0) continue;
+      // Path: from the tree, up and to the right (or left)
+      const dir = (i % 2 === 0) ? 1 : -1;
+      const bx = cx + dir * birdT * 200 + Math.sin((birdT + i) * 6) * 5;
+      const by = cy - birdT * 220 - birdT * birdT * 80;
+      // Wing flap (W shape)
+      const flap = Math.sin(birdT * 30 + i) * 1.5 + 2.5;
+      g.strokeStyle = rgba(INK_DARK, 0.9 * (1 - birdT * 0.7));
+      g.lineWidth = 1.4;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(bx - 3, by);
+      g.quadraticCurveTo(bx - 1.5, by - flap, bx, by);
+      g.quadraticCurveTo(bx + 1.5, by - flap, bx + 3, by);
+      g.stroke();
+    }
+  }
+
+  // ============ Bell rings ============
+  function drawBellRings(g, t, progress) {
+    if (progress <= 0) return;
+    const cx = 478, cy = 985;
+    const rings = 3;
+    for (let i = 0; i < rings; i++) {
+      const ringT = (progress * 1.6 - i * 0.25) % 1;
+      if (ringT <= 0 || ringT >= 1) continue;
+      const r = ringT * 80;
+      const alpha = (1 - ringT) * 0.5;
+      g.strokeStyle = rgba(INK_DARK, alpha);
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.arc(cx, cy, r, -Math.PI * 0.1, Math.PI * 1.1);
+      g.stroke();
+    }
+  }
+
+  // ============ Signature ============
+  function drawSignature(g, t) {
+    if (t <= 0) return;
+    const a = Math.min(1, t);
+    // Place the signature in the bottom-right among the leaves
+    g.save();
+    g.globalAlpha = a;
+    g.fillStyle = rgba(INK_DARK, 0.92);
+    // 范
+    drawCharFan(g, 495, 1100, 14);
+    // 宽
+    drawCharKuan(g, 517, 1100, 14);
+    // A faint red seal mark below
+    g.globalAlpha = a * 0.6;
+    g.fillStyle = 'rgba(150, 35, 30, 0.6)';
+    g.fillRect(495, 1118, 14, 14);
+    g.strokeStyle = 'rgba(150, 35, 30, 0.7)';
+    g.lineWidth = 1;
+    g.strokeRect(495, 1118, 14, 14);
+    g.globalAlpha = a;
+    g.fillStyle = 'rgba(255, 240, 230, 0.85)';
+    g.font = 'bold 9px serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('范宽', 502, 1125);
+    g.restore();
+  }
+
+  // Hand-painted 范 — rough rectangle strokes
+  function drawCharFan(g, x, y, s) {
+    g.strokeStyle = rgba(INK_DARK, 0.92);
+    g.lineWidth = s * 0.10;
+    g.lineCap = 'round';
+    // left radical (氵) — three dots/strokes
+    g.beginPath();
+    g.moveTo(x + s * 0.18, y + s * 0.18);
+    g.lineTo(x + s * 0.12, y + s * 0.30);
+    g.moveTo(x + s * 0.05, y + s * 0.55);
+    g.lineTo(x + s * 0.0, y + s * 0.70);
+    g.moveTo(x + s * 0.05, y + s * 0.85);
+    g.lineTo(x + s * 0.0, y + s * 1.0);
+    g.stroke();
+    // right part (a box-ish shape with strokes inside)
+    g.beginPath();
+    g.moveTo(x + s * 0.30, y + s * 0.30);
+    g.lineTo(x + s * 0.95, y + s * 0.30);
+    g.lineTo(x + s * 0.95, y + s * 1.0);
+    g.lineTo(x + s * 0.30, y + s * 1.0);
+    g.lineTo(x + s * 0.30, y + s * 0.30);
+    g.stroke();
+    // inner stroke (horizontal)
+    g.beginPath();
+    g.moveTo(x + s * 0.30, y + s * 0.55);
+    g.lineTo(x + s * 0.95, y + s * 0.55);
+    g.stroke();
+    // inner verticals
+    g.beginPath();
+    g.moveTo(x + s * 0.55, y + s * 0.55);
+    g.lineTo(x + s * 0.55, y + s * 1.0);
+    g.stroke();
+  }
+  // Hand-painted 宽
+  function drawCharKuan(g, x, y, s) {
+    g.strokeStyle = rgba(INK_DARK, 0.92);
+    g.lineWidth = s * 0.10;
+    g.lineCap = 'round';
+    // top horizontal + vertical hook
+    g.beginPath();
+    g.moveTo(x + s * 0.10, y + s * 0.20);
+    g.lineTo(x + s * 0.95, y + s * 0.20);
+    g.moveTo(x + s * 0.50, y + s * 0.20);
+    g.lineTo(x + s * 0.50, y + s * 0.40);
+    g.lineTo(x + s * 0.95, y + s * 0.40);
+    g.stroke();
+    // middle box (宝盖头)
+    g.beginPath();
+    g.moveTo(x + s * 0.18, y + s * 0.45);
+    g.quadraticCurveTo(x + s * 0.5, y + s * 0.55, x + s * 0.85, y + s * 0.45);
+    g.lineTo(x + s * 0.85, y + s * 0.65);
+    g.lineTo(x + s * 0.18, y + s * 0.65);
+    g.closePath();
+    g.stroke();
+    // inside horizontal
+    g.beginPath();
+    g.moveTo(x + s * 0.30, y + s * 0.78);
+    g.lineTo(x + s * 0.78, y + s * 0.78);
+    g.stroke();
+    // bottom verticals
+    g.beginPath();
+    g.moveTo(x + s * 0.30, y + s * 0.65);
+    g.lineTo(x + s * 0.30, y + s * 1.0);
+    g.moveTo(x + s * 0.78, y + s * 0.65);
+    g.lineTo(x + s * 0.78, y + s * 1.0);
+    g.stroke();
+  }
+
+  // ============ Mist ============
+  function drawMist(g, t) {
+    // Compute master mist opacity based on current act
+    let mistAlpha = 0;
+    let highAlpha = 0;
+    let lowAlpha = 0;
+    if (t < 9) {
+      // Phase 1: mist clears from heavy to light
+      const p = t / 9;
+      lowAlpha = 0.78 * (1 - p * 0.92);
+      highAlpha = 0.35 * (1 - p);
+    } else if (t < 27) {
+      // Phase 2 & 3: clear
+      lowAlpha = 0.06;
+      highAlpha = 0;
+    } else if (t < 35) {
+      // Phase 4: mist returns
+      const p = (t - 27) / 8;
+      lowAlpha = 0.06 + p * 0.72;
+      highAlpha = p * 0.35;
+    } else {
+      lowAlpha = 0.78;
+      highAlpha = 0.35;
+    }
+
+    // Low mist (covers the foot of the mountain and foreground)
+    if (lowAlpha > 0.01) {
+      const drift = Math.sin(t * 0.3) * 6;
+      const grad = g.createLinearGradient(0, 700, 0, 980);
+      grad.addColorStop(0, rgba([225, 205, 170], 0));
+      grad.addColorStop(0.4, rgba([225, 205, 170], lowAlpha * 0.7));
+      grad.addColorStop(1, rgba([225, 205, 170], lowAlpha));
+      g.fillStyle = grad;
+      g.fillRect(0, 700, LW, 280);
+
+      // A few drifting soft blobs (using radial gradients)
+      for (let i = 0; i < 6; i++) {
+        const cx = ((i * 113 + drift * 20) % (LW + 200)) - 100;
+        const cy = 820 + Math.sin(i * 1.3) * 30;
+        const rg = g.createRadialGradient(cx, cy, 5, cx, cy, 120);
+        rg.addColorStop(0, rgba([230, 210, 180], lowAlpha * 0.7));
+        rg.addColorStop(1, rgba([230, 210, 180], 0));
+        g.fillStyle = rg;
+        g.fillRect(cx - 130, cy - 130, 260, 260);
+      }
+    }
+    // High mist (covers mid section between peak and forest)
+    if (highAlpha > 0.01) {
+      const grad = g.createLinearGradient(0, 820, 0, 940);
+      grad.addColorStop(0, rgba([225, 205, 170], highAlpha));
+      grad.addColorStop(1, rgba([225, 205, 170], 0));
+      g.fillStyle = grad;
+      g.fillRect(0, 820, LW, 120);
+    }
+  }
+
+  // ============ Waterfall flow (animated) ============
+  function drawWaterfallFlow(g, t) {
+    // Visible during phase 1 (after mist clears) onward
+    let alpha = 0;
+    if (t < 9) {
+      alpha = Math.max(0, (t - 4) / 5);
+    } else {
+      alpha = 1;
+    }
+    if (alpha <= 0) return;
+
+    // The waterfall trace from the crack
+    const x = 410;
+    const yTop = 830;
+    const yBot = 920;
+    // White-cream line with animated dashes
+    g.save();
+    g.globalAlpha = 0.6 * alpha;
+    g.strokeStyle = rgba([235, 215, 180], 0.95);
+    g.lineWidth = 2.4;
+    g.lineCap = 'round';
+    // Subtle wave
+    g.beginPath();
+    for (let y = yTop; y <= yBot; y += 3) {
+      const xx = x + Math.sin(y * 0.2 + t * 4) * 1.5;
+      if (y === yTop) g.moveTo(xx, y);
+      else g.lineTo(xx, y);
+    }
+    g.stroke();
+
+    // Secondary thinner strand
+    g.lineWidth = 1.2;
+    g.globalAlpha = 0.45 * alpha;
+    g.beginPath();
+    for (let y = yTop; y <= yBot; y += 3) {
+      const xx = x + 4 + Math.sin(y * 0.18 + t * 3.5) * 1.2;
+      if (y === yTop) g.moveTo(xx, y);
+      else g.lineTo(xx, y);
+    }
+    g.stroke();
+
+    // Mist pool at the bottom of the waterfall
+    const rg = g.createRadialGradient(x, yBot + 8, 5, x, yBot + 8, 50);
+    rg.addColorStop(0, rgba([235, 215, 180], 0.85 * alpha));
+    rg.addColorStop(1, rgba([235, 215, 180], 0));
+    g.fillStyle = rg;
+    g.globalAlpha = 1;
+    g.fillRect(x - 60, yBot - 30, 120, 80);
+    g.restore();
+  }
+
+  // ============ Story timeline ============
+  const ACTS = [
+    { start: 0, end: 9, name: '晨雾', text: '山脚雾气渐散，主峰自云中显现' },
+    { start: 9, end: 18, name: '行旅', text: '商旅驱驮骡，自林中而出，循溪而行' },
+    { start: 18, end: 27, name: '钟声', text: '林间钟声起，鸟雀惊飞' },
+    { start: 27, end: 36, name: '入山', text: '驮队远去入山，雾合山静' },
+  ];
+
+  // Static UI elements
+  const actEl = document.getElementById('act');
+  const subtitleEl = document.getElementById('subtitle');
+  const loadingEl = document.getElementById('loading');
+  let currentActIdx = -1;
+
+  function updateUI(t) {
+    let idx = -1;
+    for (let i = 0; i < ACTS.length; i++) {
+      if (t >= ACTS[i].start && t < ACTS[i].end) { idx = i; break; }
+    }
+    if (idx !== currentActIdx) {
+      currentActIdx = idx;
+      if (idx === -1) {
+        actEl.classList.remove('visible');
+        subtitleEl.classList.remove('visible');
+      } else {
+        actEl.textContent = ACTS[idx].name;
+        subtitleEl.textContent = ACTS[idx].text;
+        actEl.classList.add('visible');
+        subtitleEl.classList.add('visible');
+      }
+    }
+  }
+
+  // ============ Main render ============
+  function renderStatic() {
+    drawSilkBase(sCtx);
+    drawDistantPeaks(sCtx);
+    drawMainPeak(sCtx);
+    drawMidForest(sCtx);
+    drawStreamAndPath(sCtx);
+    drawForegroundRocks(sCtx);
+  }
+
+  function renderFrame(t) {
+    // Reset main ctx to the static image
+    ctx.drawImage(staticCanvas, 0, 0);
+
+    // Waterfall flow (must be before mist so mist can dim it)
+    drawWaterfallFlow(ctx, t);
+
+    // Caravan
+    // Phase 2: caravan walks left
+    // Phase 3: caravan continues, last person pauses
+    // Phase 4: caravan enters left
+    let caravanProgress = 0;
+    if (t >= 8 && t < 32) {
+      caravanProgress = Math.min(1, (t - 8) / 18);
+    } else if (t >= 32) {
+      caravanProgress = 1;
+    }
+    if (caravanProgress > 0 && caravanProgress <= 1) {
+      const travelers = getCaravanPositions(caravanProgress);
+      // Determine if the rear traveler is paused (phase 3)
+      let paused = false;
+      if (t > 21 && t < 26) paused = true;
+      // Cull off-screen
+      for (const tr of travelers) {
+        if (tr.x < -15 || tr.x > LW + 15) continue;
+        drawCaravanMember(ctx, tr, paused && tr.type.role === 'rear');
+      }
+    }
+
+    // Bell rings (phase 3)
+    let bellProgress = 0;
+    if (t >= 19 && t < 26) bellProgress = (t - 19) / 7;
+    drawBellRings(ctx, t, bellProgress);
+
+    // Birds (phase 3)
+    let birdsProgress = 0;
+    if (t >= 19 && t < 24) birdsProgress = (t - 19) / 5;
+    drawBirds(ctx, t, birdsProgress);
+
+    // Mist overlay
+    drawMist(ctx, t);
+
+    // Signature (phase 4 last second)
+    let sigT = 0;
+    if (t > 33) sigT = Math.min(1, (t - 33) / 1.5);
+    drawSignature(ctx, sigT);
+  }
+
+  // ============ Resize handling ============
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Fit the logical canvas (1:2) into the viewport while preserving aspect
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const aspect = LW / LH; // 0.5
+    let dispW, dispH;
+    if (vw / vh > aspect) {
+      // viewport wider than painting - fit to height
+      dispH = vh;
+      dispW = vh * aspect;
+    } else {
+      dispW = vw;
+      dispH = vw / aspect;
+    }
+    canvas.style.width = dispW + 'px';
+    canvas.style.height = dispH + 'px';
+    canvas.width = LW * dpr;
+    canvas.height = LH * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Re-render static at new size if needed (drawing buffers are LW x LH logical)
+    renderStatic();
+  }
+  window.addEventListener('resize', resize);
+
+  // ============ Animation loop ============
+  const TOTAL = 36;
+  let startTime = null;
+  function loop(now) {
+    if (startTime === null) startTime = now;
+    const elapsed = (now - startTime) / 1000;
+    const t = elapsed % TOTAL;
+    renderFrame(t);
+    updateUI(t);
+    requestAnimationFrame(loop);
+  }
+
+  // ============ Boot ============
+  // Render static then start animation
+  resize();
+  // Initial full-render of static frame so the painting is visible immediately
+  renderFrame(0);
+  updateUI(0);
+  requestAnimationFrame(loop);
+  // Hide the loading veil
+  setTimeout(() => loadingEl.classList.add('gone'), 200);
+  setTimeout(() => loadingEl.remove(), 1100);
+})();
+</script>
+</body>
+</html>

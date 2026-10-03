@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>溪山行旅 · 水墨动画</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #14100c; }
+  body {
+    background:
+      radial-gradient(ellipse at 50% 42%, rgba(70,54,34,.55) 0%, rgba(30,23,16,0) 70%),
+      linear-gradient(#1d1711, #0e0b08);
+    font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    -webkit-user-select: none; user-select: none; touch-action: none;
+  }
+  #c { position: fixed; left: 0; top: 0; display: block; }
+  #cap {
+    position: fixed; box-sizing: border-box; text-align: center; color: #e9dcbc; opacity: 0;
+    text-shadow: 0 1px 6px rgba(0,0,0,.8); pointer-events: none; padding: 0 6px;
+  }
+  #cap .lab {
+    font-family: "Ma Shan Zheng", "STKaiti", "Kaiti SC", "KaiTi", serif;
+    color: #c9a15a; font-size: 1.05em; letter-spacing: .25em; margin-bottom: 4px;
+  }
+  #cap .txt { line-height: 1.55; letter-spacing: .08em; font-weight: 500; }
+  #side {
+    position: fixed; display: none; writing-mode: vertical-rl; text-orientation: upright;
+    font-family: "Ma Shan Zheng", "STKaiti", "Kaiti SC", "KaiTi", serif;
+    color: rgba(214,180,112,.8); letter-spacing: .3em; line-height: 1.2; pointer-events: none;
+    text-shadow: 0 2px 10px rgba(0,0,0,.7); opacity: 0;
+  }
+  #side.in { animation: sideIn 2.4s ease forwards; }
+  @keyframes sideIn { 0% { opacity: 0; transform: translateY(-8px); } 25% { opacity: 1; transform: none; } 100% { opacity: .75; } }
+  #prog { position: fixed; display: none; pointer-events: none; }
+  #prog i { display: block; width: 6px; height: 6px; margin: 0 0 12px; border-radius: 50%; background: rgba(214,180,112,.25); transition: background .6s, transform .6s; }
+  #prog i.on { background: rgba(214,180,112,.95); transform: scale(1.5); }
+  #load { position: fixed; left: 0; right: 0; top: 48%; text-align: center; color: rgba(214,180,112,.8); font-size: 15px; letter-spacing: .5em; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="side"></div>
+<div id="prog"><i></i><i></i><i></i><i></i></div>
+<div id="cap"><div class="lab"></div><div class="txt"></div></div>
+<div id="load">研 墨 中</div>
+<script src="js/util.js"></script>
+<script src="js/paint.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
