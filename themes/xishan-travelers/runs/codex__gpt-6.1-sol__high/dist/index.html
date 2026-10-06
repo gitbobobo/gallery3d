@@ -1,323 +1,44 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>溪山行旅图 · 墨动画卷</title>
-<style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #211b15; }
-  body { display: grid; place-items: center; font-family: "STSong", "Songti SC", serif; }
-  #stage { position: relative; width: 100vw; height: 100vh; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse at center, #aa8c63 0%, #7c6247 100%); }
-  canvas { display: block; width: min(100vw, 52.6316vh); height: min(190vw, 100vh); max-width: 100vw; max-height: 100vh; aspect-ratio: 1000 / 1900; touch-action: none; box-shadow: 0 12px 42px rgba(26,18,12,.28); }
-  .grain { pointer-events: none; position: absolute; inset: 0; opacity: .14; mix-blend-mode: screen; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E"); }
-  .vignette { pointer-events: none; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 58%, rgba(20,14,10,.36) 100%); }
-  .mark { position: absolute; top: max(16px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left)); color: rgba(242,230,201,.66); letter-spacing: .16em; font-size: 11px; writing-mode: vertical-rl; line-height: 1.8; text-shadow: 0 1px 3px rgba(0,0,0,.45); user-select: none; }
-  .chapter { position: absolute; bottom: max(22px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(88vw, 560px); text-align: center; color: rgba(248,238,214,.9); text-shadow: 0 1px 3px rgba(0,0,0,.82); pointer-events: none; user-select: none; }
-  .chapter .index { font-size: 10px; letter-spacing: .38em; opacity: .72; margin-bottom: 7px; }
-  .chapter .line { font-size: clamp(15px, 2.25vw, 21px); letter-spacing: .12em; line-height: 1.7; }
-  .chapter .sub { font-size: clamp(11px, 1.6vw, 14px); letter-spacing: .1em; opacity: .75; margin-top: 5px; }
-  @media (max-width: 560px) { .mark { font-size: 10px; } .chapter { width: 92vw; bottom: 20px; } }
-  @media (prefers-reduced-motion: reduce) { .chapter, .mark { transition: none; } }
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#eee9df">
+<title>溪山行旅 · 一卷会呼吸的山水</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%239e493c'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-size='23' fill='%23eee9df'%3E山%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div id="stage">
-  <canvas id="painting" aria-label="《溪山行旅图》的代码绘制动画"></canvas>
-  <div class="grain"></div><div class="vignette"></div>
-  <div class="mark">范宽 · 溪山行旅图</div>
-  <div class="chapter" aria-live="polite"><div class="index"></div><div class="line"></div><div class="sub"></div></div>
-</div>
-<script>
-(() => {
-  const canvas = document.getElementById('painting');
-  const ctx = canvas.getContext('2d', { alpha: false });
-  const chapter = document.querySelector('.chapter');
-  const indexEl = chapter.querySelector('.index');
-  const lineEl = chapter.querySelector('.line');
-  const subEl = chapter.querySelector('.sub');
-  const TAU = Math.PI * 2;
-  let W = 0, H = 0, DPR = Math.min(2, window.devicePixelRatio || 1);
-  let t0 = performance.now();
-  const loop = 32000;
-  const palette = { paper:'#b69a70', ink:'#29251e', deep:'#1e1c18', brown:'#6c553d', moss:'#4b4a3c', wash:'#8b7961', water:'#66746d', cloud:'#d6cbb0', seal:'#8f3f2e' };
-  const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const noise = (x,y,s=1) => (rnd(x*12.7+y*78.2+s*3.1)-.5) * 2;
-  const lerp = (a,b,p) => a + (b-a)*p;
-  const clamp = (n,a=0,b=1) => Math.max(a, Math.min(b,n));
-  const ease = p => p < .5 ? 2*p*p : 1 - Math.pow(-2*p+2,2)/2;
-  const fadeInOut = (p, a=.12, b=.88) => clamp(Math.min((p-a)/(b-a), (b-p)/(b-a)) * 4, 0, 1);
-  const X = n => n * W, Y = n => n * H;
-  const fitScale = () => Math.min(W/1000, H/1900);
-
-  function resize(){
-    W = canvas.clientWidth;
-    H = canvas.clientHeight;
-    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-  }
-  window.addEventListener('resize', resize, {passive:true}); resize();
-
-  function parchment(){
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0, '#a98b62'); g.addColorStop(.46, '#b89d72'); g.addColorStop(1, '#9d815a');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    ctx.globalAlpha = .09;
-    for(let i=0;i<90;i++){
-      const y = (i/90)*H + noise(i,4)*H*.012;
-      ctx.strokeStyle = i%2 ? '#e0cda3' : '#6f543b';
-      ctx.lineWidth = .5 + rnd(i+7)*1.2;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+noise(i,8)*12); ctx.stroke();
-    }
-    ctx.globalAlpha = .065;
-    for(let i=0;i<210;i++){
-      const x=rnd(i+4)*W, y=rnd(i+18)*H, r=1+rnd(i+39)*9;
-      ctx.fillStyle = i%3 ? '#4f3a29' : '#e5cf9d';
-      ctx.beginPath(); ctx.ellipse(x,y,r*2,r, rnd(i)*TAU,0,TAU); ctx.fill();
-    }
-    ctx.globalAlpha=1;
-  }
-
-  function path(points, fill, stroke, lw=1, alpha=1){
-    ctx.save(); ctx.globalAlpha=alpha; ctx.beginPath();
-    points.forEach((p,i)=>i?ctx.lineTo(X(p[0]),Y(p[1])):ctx.moveTo(X(p[0]),Y(p[1])));
-    if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} ctx.restore();
-  }
-
-  function mountainBase(){
-    // broad main peak
-    path([[.05,.74],[.09,.61],[.16,.49],[.22,.37],[.28,.25],[.36,.14],[.45,.075],[.51,.045],[.57,.065],[.63,.13],[.7,.22],[.76,.32],[.84,.46],[.92,.62],[1,.75],[1,1],[0,1]], '#665746');
-    // pale planes on the cliff
-    path([[.35,.72],[.34,.52],[.39,.39],[.45,.25],[.49,.11],[.54,.08],[.58,.18],[.59,.34],[.55,.54],[.58,.73],[.66,.9],[.44,.92]], 'rgba(161,137,99,.58)');
-    path([[.59,.14],[.68,.23],[.72,.4],[.78,.53],[.83,.77],[.69,.86],[.61,.66],[.62,.47]], 'rgba(54,50,41,.7)');
-    path([[.1,.68],[.18,.5],[.29,.39],[.37,.42],[.33,.59],[.25,.78]], 'rgba(82,69,52,.86)');
-    // right gorge
-    path([[.78,.23],[.86,.31],[.95,.49],[1,.58],[1,.79],[.9,.73],[.87,.56],[.82,.41]], 'rgba(45,42,36,.82)');
-    // distant left shoulder
-    path([[0,.6],[.08,.48],[.16,.44],[.23,.49],[.22,.64],[.12,.76],[0,.78]], 'rgba(73,64,50,.82)');
-  }
-
-  function hatch(seed, x0,y0,x1,y1, count, color, width, alpha){
-    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=width; ctx.globalAlpha=alpha; ctx.lineCap='round';
-    for(let i=0;i<count;i++){
-      const p=rnd(seed+i*2.7), q=rnd(seed+i*3.9);
-      const x=lerp(x0,x1,p), y=lerp(y0,y1,p);
-      const len=(.008+.028*rnd(seed+i*5.1));
-      const sl=(rnd(seed+i*7.2)-.5)*.03;
-      ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.quadraticCurveTo(X(x+sl),Y(y-len*.5),X(x+sl*.7),Y(y-len)); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function mountainTexture(){
-    // vertical dry-brush seams
-    for(let i=0;i<18;i++){
-      const x=.2+i*.035+noise(i,10)*.025;
-      ctx.save(); ctx.globalAlpha=.14+rnd(i)*.13; ctx.strokeStyle=i%3?'#2f2c25':'#b19a70'; ctx.lineWidth=.7+rnd(i)*1.2;
-      ctx.beginPath(); ctx.moveTo(X(x),Y(.84));
-      ctx.bezierCurveTo(X(x-.035),Y(.65),X(x+.045),Y(.44),X(x+.01),Y(.14+rnd(i)*.08)); ctx.stroke(); ctx.restore();
-    }
-    // layered cun strokes
-    hatch(3,.16,.46,.46,.18,92,'#27251f',1.2,.27);
-    hatch(7,.32,.7,.59,.15,112,'#27241f',1.4,.25);
-    hatch(11,.52,.76,.76,.28,104,'#29261f',1.15,.29);
-    hatch(19,.07,.72,.27,.41,78,'#201f1b',1.3,.3);
-    hatch(28,.7,.74,.93,.45,70,'#211f1b',1.4,.28);
-    // light dry strokes
-    hatch(47,.22,.7,.46,.22,58,'#d0b98a',.8,.2);
-    hatch(59,.5,.75,.68,.25,48,'#c6ad7e',.7,.18);
-    // crag ledges
-    ctx.save(); ctx.globalAlpha=.48; ctx.strokeStyle='#25231e'; ctx.lineWidth=2;
-    for(let i=0;i<26;i++){
-      const x=.12+rnd(i+80)*.7, y=.2+rnd(i+90)*.58;
-      ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.quadraticCurveTo(X(x+.03),Y(y+.012),X(x+.08),Y(y-.016)); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function peakTrees(){
-    ctx.save(); ctx.fillStyle='#1e211d'; ctx.globalAlpha=.9;
-    const trees=[[.40,.13,.04],[.45,.09,.045],[.5,.065,.052],[.56,.1,.043],[.62,.14,.052],[.28,.26,.04],[.7,.25,.045],[.79,.34,.04],[.1,.47,.04]];
-    for(const [x,y,r] of trees){
-      ctx.beginPath();
-      for(let k=0;k<10;k++){ const a=k/10*TAU, rr=r*(.72+.36*rnd(x*100+y*200+k)); const px=x+Math.cos(a)*rr, py=y+Math.sin(a)*rr*.64; k?ctx.lineTo(X(px),Y(py)):ctx.moveTo(X(px),Y(py)); }
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle='rgba(33,34,29,.72)'; ctx.beginPath(); ctx.arc(X(x+r*.58),Y(y+.012),X(r*.38),0,TAU); ctx.fill();
-      ctx.fillStyle='#1e211d';
-    }
-    ctx.restore();
-    // clipped little needle marks
-    hatch(77,.22,.31,.77,.19,170,'#171916',.9,.55);
-  }
-
-  function waterfall(now, active){
-    const flow = active ? (.5+.5*Math.sin(now*.002)) : .06;
-    ctx.save(); ctx.globalCompositeOperation='screen';
-    const g=ctx.createLinearGradient(X(.83),Y(.2),X(.83),Y(.77)); g.addColorStop(0,'rgba(227,220,192,.12)'); g.addColorStop(.42,'rgba(230,224,201,.68)'); g.addColorStop(1,'rgba(226,217,190,.08)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(X(.823),Y(.2)); ctx.bezierCurveTo(X(.84),Y(.34),X(.81),Y(.53),X(.835),Y(.73)); ctx.lineTo(X(.855),Y(.73)); ctx.bezierCurveTo(X(.84),Y(.5),X(.865),Y(.32),X(.845),Y(.2)); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha=.45+.3*flow; ctx.strokeStyle='#e4dec8'; ctx.lineWidth=1.3;
-    for(let i=0;i<8;i++){ const x=.832+(i-4)*.003; const off=((now/900+i*.18)%1)*.06; ctx.beginPath(); ctx.moveTo(X(x),Y(.24+off)); ctx.bezierCurveTo(X(x-.012),Y(.39),X(x+.01),Y(.55),X(x-.004),Y(.7)); ctx.stroke(); }
-    ctx.restore();
-  }
-
-  function mist(now, amount){
-    ctx.save(); ctx.globalCompositeOperation='screen';
-    const drift=Math.sin(now*.00016)*.018;
-    const bands=[.38,.52,.74,.83];
-    bands.forEach((yy,i)=>{
-      ctx.globalAlpha = amount * (.13 + i*.025);
-      const grad=ctx.createLinearGradient(0,Y(yy),W,Y(yy)); grad.addColorStop(0,'rgba(235,225,198,0)'); grad.addColorStop(.22,'rgba(233,222,195,.75)'); grad.addColorStop(.64,'rgba(237,227,203,.5)'); grad.addColorStop(1,'rgba(231,218,187,0)');
-      ctx.fillStyle=grad; ctx.beginPath(); ctx.moveTo(0,Y(yy-.025+drift));
-      ctx.bezierCurveTo(X(.2),Y(yy-.045),X(.33),Y(yy+.045),X(.5),Y(yy));
-      ctx.bezierCurveTo(X(.68),Y(yy-.04),X(.8),Y(yy+.04),W,Y(yy-.012));
-      ctx.lineTo(W,Y(yy+.065)); ctx.bezierCurveTo(X(.8),Y(yy+.1),X(.66),Y(yy+.02),X(.5),Y(yy+.07)); ctx.bezierCurveTo(X(.29),Y(yy+.1),X(.17),Y(yy+.02),0,Y(yy+.045)); ctx.closePath(); ctx.fill();
-    });
-    ctx.restore();
-  }
-
-  function tree(x,y,s,seed,front=false){
-    ctx.save();
-    ctx.strokeStyle = front ? '#26251f' : '#37382e'; ctx.fillStyle = front ? '#25261f' : '#35382f';
-    ctx.globalAlpha=front?.92:.7;
-    ctx.lineWidth = Math.max(1, s*W*.018); ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.bezierCurveTo(X(x-s*.06),Y(y-s*.18),X(x+s*.03),Y(y-s*.4),X(x+s*.01),Y(y-s*.62)); ctx.stroke();
-    for(let b=0;b<4;b++){ const by=y-s*(.2+b*.1), bx=x+noise(seed,b)*s*.3; ctx.beginPath(); ctx.moveTo(X(x),Y(by+.08*s)); ctx.quadraticCurveTo(X(bx),Y(by),X(bx+(rnd(seed+b)*.28-.14)*s),Y(by-.13*s)); ctx.stroke(); }
-    for(let l=0;l<8;l++){
-      const lx=x+(rnd(seed+l*4)*2-1)*s*.26, ly=y-s*(.34+rnd(seed+l*7)*.34), rx=s*(.09+rnd(seed+l*2)*.1), ry=rx*(.55+rnd(seed+l)*.55);
-      ctx.beginPath();
-      for(let k=0;k<9;k++){ const a=k/9*TAU, rr=1 + noise(seed+l*5+k,3)*.16; const px=lx+Math.cos(a)*rx*rr, py=ly+Math.sin(a)*ry*rr; k?ctx.lineTo(X(px),Y(py)):ctx.moveTo(X(px),Y(py)); }
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle = front ? 'rgba(28,31,25,.7)' : 'rgba(47,49,39,.58)';
-    }
-    ctx.restore();
-  }
-
-  function forest(){
-    // far ridge
-    path([[.03,.77],[.12,.7],[.2,.69],[.29,.73],[.39,.67],[.5,.71],[.6,.67],[.72,.72],[.82,.68],[.97,.74],[1,.79],[1,.92],[0,.92]], 'rgba(57,57,45,.88)');
-    const farTrees=[[.09,.82,.09],[.16,.78,.08],[.24,.79,.1],[.31,.77,.085],[.4,.82,.09],[.5,.76,.095],[.59,.8,.08],[.69,.77,.09],[.76,.81,.1],[.88,.78,.09],[.97,.82,.08]];
-    farTrees.forEach((d,i)=>tree(d[0],d[1],d[2],120+i,false));
-    // clearings and shelf
-    path([[.2,.77],[.37,.73],[.5,.76],[.65,.72],[.76,.76],[.76,.81],[.62,.84],[.44,.82],[.28,.86]], 'rgba(144,119,82,.52)');
-    // foreground trees, denser on right
-    [[.12,.85,.13],[.2,.83,.1],[.31,.87,.13],[.43,.84,.12],[.56,.86,.14],[.68,.83,.12],[.78,.86,.14],[.88,.82,.16],[.97,.87,.12]].forEach((d,i)=>tree(d[0],d[1],d[2],220+i,true));
-  }
-
-  function temple(){
-    ctx.save(); ctx.globalAlpha=.9; ctx.strokeStyle='#24231e'; ctx.fillStyle='#3b3429'; ctx.lineWidth=1.2;
-    const x=.69,y=.755,w=.11,h=.055;
-    ctx.fillRect(X(x),Y(y),X(w),Y(h));
-    ctx.beginPath(); ctx.moveTo(X(x-.018),Y(y)); ctx.quadraticCurveTo(X(x+w*.5),Y(y-.038),X(x+w+.018),Y(y)); ctx.lineTo(X(x+w-.012),Y(y+.009)); ctx.lineTo(X(x+.012),Y(y+.009)); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(X(x+.015),Y(y+.009)); ctx.lineTo(X(x+.015),Y(y+h)); ctx.moveTo(X(x+w-.015),Y(y+.009)); ctx.lineTo(X(x+w-.015),Y(y+h)); ctx.stroke();
-    ctx.fillStyle='#bca97c'; for(let i=0;i<4;i++){ctx.fillRect(X(x+.02+i*.023),Y(y+.023),X(.008),Y(.009));}
-    ctx.restore();
-  }
-
-  function river(){
-    ctx.save(); ctx.globalAlpha=.8; ctx.strokeStyle='#5e6c65'; ctx.lineWidth=12; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(X(.05),Y(.9)); ctx.bezierCurveTo(X(.28),Y(.86),X(.4),Y(.95),X(.55),Y(.9)); ctx.bezierCurveTo(X(.72),Y(.85),X(.78),Y(.94),X(1),Y(.89)); ctx.stroke();
-    ctx.globalAlpha=.55; ctx.strokeStyle='#d1c19b'; ctx.lineWidth=3;
-    for(let i=0;i<8;i++){ctx.beginPath(); ctx.moveTo(X(.06+i*.12),Y(.9+i%2*.005)); ctx.quadraticCurveTo(X(.16+i*.1),Y(.885-i%3*.003),X(.25+i*.1),Y(.9)); ctx.stroke();}
-    ctx.restore();
-  }
-
-  function pathRoad(){
-    ctx.save(); ctx.strokeStyle='rgba(178,147,100,.9)'; ctx.lineWidth=12; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(X(.9),Y(.845)); ctx.bezierCurveTo(X(.73),Y(.84),X(.7),Y(.88),X(.54),Y(.88)); ctx.bezierCurveTo(X(.4),Y(.88),X(.33),Y(.83),X(.16),Y(.84)); ctx.stroke();
-    ctx.strokeStyle='rgba(54,48,38,.48)'; ctx.lineWidth=1.8; ctx.setLineDash([2,5]); ctx.stroke(); ctx.restore();
-  }
-
-  function foregroundRocks(){
-    const rocks=[[[0,.93],[.08,.88],[.18,.9],[.23,1],[0,1]],[[.18,1],[.27,.91],[.38,.9],[.48,.95],[.53,1]],[[.46,1],[.56,.9],[.68,.92],[.77,1]],[[.75,1],[.84,.91],[.98,.88],[1,1]]];
-    rocks.forEach((r,i)=>{path(r,'#4e4638'); hatch(430+i,.08+i*.2,.98,.26+i*.2,.91,45,'#201f1b',1.25,.48); hatch(500+i,.1+i*.2,.96,.29+i*.2,.91,27,'#bfaa7d',.8,.27);});
-  }
-
-  function mule(x,y,s,flip=false,seed=1){
-    ctx.save(); ctx.translate(X(x),Y(y)); ctx.scale((flip?-1:1)*s,s); ctx.globalAlpha=.96; ctx.strokeStyle='#28241e'; ctx.fillStyle='#332d24'; ctx.lineWidth=1.3/s; ctx.lineCap='round';
-    ctx.beginPath(); ctx.ellipse(0,-8,19,10,0,0,TAU); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(14,-10); ctx.lineTo(25,-18); ctx.lineTo(33,-13); ctx.lineTo(27,-4); ctx.lineTo(14,-4); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-12,-15); ctx.lineTo(-5,-28); ctx.lineTo(7,-28); ctx.lineTo(13,-14); ctx.closePath(); ctx.fillStyle='#76654a'; ctx.fill();
-    ctx.strokeStyle='#211f1a'; ctx.beginPath(); ctx.moveTo(-10,-1); ctx.lineTo(-12,15); ctx.moveTo(6,-1); ctx.lineTo(7,15); ctx.moveTo(17,-3); ctx.lineTo(19,13); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(29,-14); ctx.lineTo(36,-19); ctx.moveTo(28,-8); ctx.lineTo(36,-6); ctx.stroke();
-    ctx.restore();
-  }
-
-  function traveler(x,y,s,stop=false){
-    ctx.save(); ctx.translate(X(x),Y(y)); ctx.scale(s,s); ctx.strokeStyle='#211f1b'; ctx.fillStyle='#332c23'; ctx.lineWidth=1.5/s; ctx.lineCap='round';
-    ctx.beginPath(); ctx.arc(0,-20,3.2,0,TAU); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(0,-4); ctx.moveTo(0,-12); ctx.lineTo(stop?-7:5,-8); ctx.moveTo(0,-4); ctx.lineTo(-4,9); ctx.moveTo(0,-4); ctx.lineTo(6,9); ctx.stroke();
-    if(stop){ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(5,-25); ctx.stroke();}
-    ctx.restore();
-  }
-
-  function caravan(now, scene, p){
-    if(scene<1) return;
-    let lead, op=1;
-    if(scene===1){ lead=lerp(.98,.42,ease(clamp(p))); }
-    else if(scene===2){ lead=lerp(.42,.28,ease(clamp(p))); }
-    else { lead=lerp(.28,.04,ease(clamp(p))); }
-    const y=.846 + Math.sin(now*.003)*.002;
-    const xs=[lead,lead+.075,lead+.15,lead+.225];
-    xs.forEach((x,i)=>mule(x,y+i*.006,.72, false, i));
-    // handlers: one in front, one at tail
-    traveler(lead-.055,y+.008,.8,false);
-    const stopped=scene===2 && p<.55;
-    traveler(xs[3]+.06,y+.02,.75,stopped);
-    if(scene===3 && p>.62){ traveler(xs[3]+.06,y+.02,.75,false); }
-  }
-
-  function birds(now, scene, p){
-    if(scene!==2 || p<.16) return;
-    const q=clamp((p-.16)/.7);
-    ctx.save(); ctx.globalAlpha=.8*(1-q*.25); ctx.strokeStyle='#282922'; ctx.lineWidth=1.3; ctx.lineCap='round';
-    for(let i=0;i<9;i++){
-      const x=.57+((i*0.047)%0.36), y=.77-q*(.16+(i%3)*.035)+Math.sin(now*.004+i)*.005, s=.012+(i%2)*.004;
-      ctx.beginPath(); ctx.moveTo(X(x-s),Y(y)); ctx.quadraticCurveTo(X(x-s*.3),Y(y-.012),X(x),Y(y)); ctx.quadraticCurveTo(X(x+s*.3),Y(y-.012),X(x+s),Y(y)); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function seals(){
-    ctx.save(); ctx.globalAlpha=.25; ctx.fillStyle=palette.seal;
-    [[.1,.08,.035],[.9,.18,.027],[.04,.57,.025]].forEach(([x,y,r],i)=>{ctx.fillRect(X(x),Y(y),X(r),X(r)); ctx.globalAlpha=.38; ctx.strokeStyle='#c5a77b'; ctx.lineWidth=1; ctx.strokeRect(X(x+.006),Y(y+.006),X(r-.012),X(r-.012));ctx.globalAlpha=.25;}); ctx.restore();
-  }
-
-  function signature(alpha){
-    if(alpha<=0) return;
-    ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle='#903d2c'; ctx.strokeStyle='#d2af7a'; ctx.lineWidth=1;
-    const x=.84,y=.835,w=.085,h=.05; ctx.fillRect(X(x),Y(y),X(w),Y(h)); ctx.strokeRect(X(x+.004),Y(y+.004),X(w-.008),Y(h-.008));
-    ctx.fillStyle='#d4b57f'; ctx.font=`${Math.max(12, W*.018)}px "STKaiti","KaiTi",serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('范宽',X(x+w/2),Y(y+h/2+.002)); ctx.restore();
-  }
-
-  const scenes=[
-    {name:'第一幕 · 晨雾', line:'天刚亮，山脚的雾还没有散。', sub:'雾从溪谷退去，主峰与瀑布慢慢醒来。'},
-    {name:'第二幕 · 行旅', line:'林外传来铃声，一队商旅沿溪而来。', sub:'四头驮骡踏着湿石，从右向左走。'},
-    {name:'第三幕 · 钟声', line:'寺院一声钟响，惊起树梢的鸟。', sub:'最后的人停了一会儿，抬头看山。'},
-    {name:'第四幕 · 入山', line:'山路收进左边的林子，行旅渐渐远了。', sub:'雾重新合拢，画上留下一个小小的落款。'}
-  ];
-
-  function render(now){
-    const elapsed=(now-t0)%loop, raw=Math.min(3.999999, elapsed/8000), scene=Math.floor(raw)%4, p=raw-scene;
-    parchment();
-    // subtle dawn light changes by scene
-    ctx.save(); ctx.globalAlpha=.08*(1-scene*.1); ctx.fillStyle='#eed4a2'; ctx.fillRect(0,0,W,H*.28); ctx.restore();
-    mountainBase(); mountainTexture(); peakTrees(); waterfall(now, scene===0 || scene===3);
-    forest(); temple(); river(); pathRoad(); foregroundRocks(); seals();
-    // animated atmosphere
-    const mistAmount = scene===0 ? lerp(1,.18,ease(p)) : scene===3 ? lerp(.12,1,ease(p)) : .18;
-    mist(now,mistAmount);
-    birds(now,scene,p); caravan(now,scene,p);
-    if(scene===3) signature(fadeInOut(p,.48,.92));
-    // frame edge and ink line
-    ctx.save(); ctx.globalAlpha=.25; ctx.strokeStyle='#392e24'; ctx.lineWidth=1; ctx.strokeRect(8,8,W-16,H-16); ctx.restore();
-    const info=scenes[scene];
-    indexEl.textContent=info.name; lineEl.textContent=info.line; subEl.textContent=info.sub;
-    chapter.style.opacity = '1';
-    requestAnimationFrame(render);
-  }
-  requestAnimationFrame(render);
-})();
-</script>
-</body>
-</html>
+<div class="paper-grain" aria-hidden="true"></div>
+<header><a class="brand" href="#" aria-label="山水之间，重新开始"><span class="brand-seal">山<br>水</span><span>山水之间</span><i></i><small>AN INK JOURNEY</small></a><div class="header-note">一卷山水，四幕光阴<span class="header-dot"></span><span>宋画新生 · 001</span></div></header>
+<main>
+<section class="introduction">
+<div class="eyebrow"><span class="hairline"></span>北宋 · 范宽</div>
+<h1>溪山<br><span>行旅</span><span class="title-seal">静观</span></h1>
+<p class="english-title">TRAVELERS AMONG<br>MOUNTAINS AND STREAMS</p>
+<div class="intro-rule"></div>
+<p class="intro-text">山不言，而万物有声。<br>循着一缕晨雾，走进千年前<br>那条未尽的山路。</p>
+<div class="work-meta"><span>绢本水墨 · 代码重绘</span><span>据《溪山行旅图》意境演绎</span></div>
+<svg class="landscape-mark" viewBox="0 0 230 75" aria-hidden="true"><path d="M1 63L29 58 48 43 59 48 84 24 92 27 107 9 119 14 128 8 142 23 150 40 168 31 178 42 192 47 210 64 229 67M40 57L77 47 101 39 108 22M120 17L126 44 137 56M148 49L162 56 166 67"/></svg>
+</section>
+<section class="painting-area" aria-label="以代码绘制的溪山行旅图，四幕水墨动画">
+<div class="scroll-top"><span></span></div>
+<div class="painting-wrap"><canvas id="painting" width="1056" height="2112" role="img" aria-label="顶天立地的主峰、细瀑布、林中寺院与溪畔行旅，绘于旧绢之上"></canvas><div class="painting-vignette"></div><div id="detail-badge">近观 · 山脚行旅</div></div>
+<div class="scroll-bottom"><span></span></div>
+<div class="painting-caption"><span>溪山行旅图</span><span>FAN KUAN · NORTHERN SONG</span></div>
+<button class="detail-button" id="detail" aria-label="放大观看山脚行旅" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg><span>近观</span></button>
+</section>
+<section class="story-panel" aria-label="四幕故事">
+<div class="story-topline"><span>画中光阴</span><span class="auto-state"><i></i><span id="status">自动演绎中</span></span></div>
+<div class="chapter-heading"><span id="chapter-number">壹</span><h2 id="chapter-title">晨雾</h2></div>
+<div class="subtitle" aria-live="polite"><p id="line-one">天色初明，群山尚在梦中。</p><p id="line-two">一缕雾散，千仞青峰渐醒。</p></div>
+<nav class="chapters" aria-label="选择幕次">
+<button class="chapter active" data-chapter="0" aria-label="播放第一幕晨雾"><span class="chapter-index">01</span><span>晨雾</span><span class="chapter-time">雾散 · 山醒</span><span class="chapter-progress"></span></button>
+<button class="chapter" data-chapter="1" aria-label="播放第二幕行旅"><span class="chapter-index">02</span><span>行旅</span><span class="chapter-time">溪畔 · 蹄声</span><span class="chapter-progress"></span></button>
+<button class="chapter" data-chapter="2" aria-label="播放第三幕钟声"><span class="chapter-index">03</span><span>钟声</span><span class="chapter-time">空山 · 回响</span><span class="chapter-progress"></span></button>
+<button class="chapter" data-chapter="3" aria-label="播放第四幕入山"><span class="chapter-index">04</span><span>入山</span><span class="chapter-time">人远 · 山长</span><span class="chapter-progress"></span></button>
+</nav>
+<div class="playback"><button id="play" aria-label="暂停动画"><svg id="play-icon" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button><button id="restart" aria-label="从头播放"><svg viewBox="0 0 24 24"><path d="M5 9a7.5 7.5 0 1 1-1 7M5 4v5h5"/></svg></button><div class="time"><span id="elapsed">00:00</span><span class="time-divider">/</span>01:04</div><button id="sound" aria-label="开启钟声" aria-pressed="false"><svg id="sound-icon" viewBox="0 0 24 24"><path d="M10 5L5 9H2v6h3l5 4V5ZM15 9l6 6m0-6-6 6"/></svg></button></div>
+<p class="story-footnote">山中一日，世间千年<span>循环演绎 · 64 秒</span></p>
+</section>
+</main>
+<footer><span>以墨为骨，以时间为息。</span><span class="footer-right">无需操作，静候山水<span class="tiny-circle">∞</span></span></footer>
+<script src="./painting.js"></script><script src="./app.js"></script>
+</body></html>

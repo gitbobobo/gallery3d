@@ -42,6 +42,7 @@
     ],
     "a": [
       "codex__gpt-6-astra__high",
+      "codex__gpt-6.1-sol__high",
       "opencode__deepseek-v4.1-flash__high",
       "droid__glm-5.3-flash__high"
     ],

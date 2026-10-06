@@ -5,23 +5,23 @@
   "model": "gpt-6.1-sol",
   "effort": "high",
   "modelArg": "gpt-6.1-sol",
-  "harnessVersion": "codex-cli 0.159.2",
+  "harnessVersion": "codex-cli 0.160.0",
   "manual": false,
   "promptSha256": "8a24e96f7a1e301fe769adfbef4924e9d1cd5d0b686afec2269150e059dc84d6",
-  "preparedAt": "2026-10-02T21:00:04.387Z",
-  "launchedAt": "2026-10-02T21:00:04.450Z",
-  "finishedAt": "2026-10-02T21:10:35.412Z",
-  "importedAt": "2026-10-02T21:10:42.596Z",
+  "preparedAt": "2026-10-06T18:21:21.735Z",
+  "launchedAt": "2026-10-06T18:21:21.797Z",
+  "finishedAt": "2026-10-06T18:40:45.729Z",
+  "importedAt": "2026-10-06T18:40:56.762Z",
   "status": "ok",
   "reasons": [],
   "stats": {
-    "durationMs": 630962,
+    "durationMs": 1163932,
     "costUsd": null,
-    "tokensIn": 1407662,
-    "tokensOut": 17528,
+    "tokensIn": 1354962,
+    "tokensOut": 35001,
     "consoleErrors": 0,
     "externalDomains": [],
-    "distBytes": 19846
+    "distBytes": 46201
   },
   "notes": true
 }

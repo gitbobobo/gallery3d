@@ -39,6 +39,7 @@
     ],
     "a": [
       "droid__gpt-6.1-sol__high",
+      "codex__gpt-6.1-sol__high",
       "devin__swe-2__high"
     ],
     "b": [
