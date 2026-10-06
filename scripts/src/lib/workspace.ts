@@ -92,6 +92,9 @@ export function scanWorkspaces(): WorkspaceEntry[] {
   return out;
 }
 
-export function findWorkspaceByRunId(runId: string): WorkspaceEntry | null {
-  return scanWorkspaces().find((w) => w.marker.runId === runId) ?? null;
+/** runId 只在主题内唯一，必须带 themeId 过滤；同主题多次重跑时取最新的一个 */
+export function findWorkspaceByRunId(themeId: string, runId: string): WorkspaceEntry | null {
+  const hits = scanWorkspaces().filter((w) => w.marker.theme === themeId && w.marker.runId === runId);
+  hits.sort((a, b) => b.marker.preparedAt.localeCompare(a.marker.preparedAt));
+  return hits[0] ?? null;
 }

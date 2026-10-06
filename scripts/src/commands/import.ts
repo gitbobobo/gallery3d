@@ -32,8 +32,8 @@ export async function cmdImport(args: string[]): Promise<void> {
   let ws = values.workspace ? resolve(values.workspace) : undefined;
   if (!ws) {
     if (runId) {
-      const found = findWorkspaceByRunId(runId);
-      if (!found) throw new Error(`在 ~/gallery3d-workspaces 找不到 runId=${runId} 的工作区；用 --workspace 指定路径`);
+      const found = findWorkspaceByRunId(themeId, runId);
+      if (!found) throw new Error(`在 ~/gallery3d-workspaces 找不到 ${themeId}/${runId} 的工作区；用 --workspace 指定路径`);
       ws = found.ws;
     } else {
       const candidates = scanWorkspaces().filter((w) => w.marker.theme === themeId && !w.marker.imported);
