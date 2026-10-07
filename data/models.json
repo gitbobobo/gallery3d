@@ -43,12 +43,12 @@
     {
       "id": "sonnet-5.5",
       "display": "Sonnet 5.5",
-      "perHarness": { "droid": "claude-sonnet-5-5" }
+      "perHarness": { "droid": "claude-sonnet-5-5", "devin": "claude-sonnet-5-5-high" }
     },
     {
       "id": "opus-5.5",
       "display": "Opus 5.5",
-      "perHarness": { "droid": "claude-opus-5-5" }
+      "perHarness": { "droid": "claude-opus-5-5", "devin": "claude-opus-5-5-high" }
     },
     {
       "id": "gemini-3.8-flash",
