@@ -1,0 +1,27 @@
+{
+  "runId": "devin__sonnet-5.5__high",
+  "theme": "pond-side",
+  "harness": "devin",
+  "model": "claude-sonnet-5-5-high",
+  "effort": "high",
+  "modelArg": "claude-sonnet-5-5-high",
+  "harnessVersion": "devin 3000.11.3 (9c803229faa4)",
+  "manual": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "preparedAt": "2026-10-06T19:48:41.651Z",
+  "launchedAt": "2026-10-06T19:48:41.713Z",
+  "finishedAt": "2026-10-06T20:38:29.147Z",
+  "importedAt": "2026-10-06T20:39:23.920Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2987434,
+    "costUsd": null,
+    "tokensIn": 35614875,
+    "tokensOut": 263311,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 608511
+  },
+  "notes": true
+}

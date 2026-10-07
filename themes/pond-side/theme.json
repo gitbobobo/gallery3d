@@ -1,0 +1,15 @@
+{
+  "id": "pond-side",
+  "title": "池塘边",
+  "category": "3d",
+  "tags": [
+    "水",
+    "渲染",
+    "物理",
+    "交互"
+  ],
+  "lang": "zh",
+  "allowExternalAssets": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "createdAt": "2026-10-06T18:54:52.260Z"
+}

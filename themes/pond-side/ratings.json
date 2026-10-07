@@ -1,0 +1,51 @@
+{
+  "tiers": [
+    {
+      "id": "agi",
+      "label": "AGI",
+      "color": "#e4554f"
+    },
+    {
+      "id": "s-plus",
+      "label": "S+",
+      "color": "#f0a03c"
+    },
+    {
+      "id": "s",
+      "label": "S",
+      "color": "#efe04b"
+    },
+    {
+      "id": "a",
+      "label": "A",
+      "color": "#f3ead3"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "color": "#e4e0d4"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "color": "#d9dde3"
+    }
+  ],
+  "rows": {
+    "agi": [],
+    "s-plus": [
+      "devin__opus-5.5__high",
+      "devin__sonnet-5.5__high"
+    ],
+    "s": [
+      "codex__gpt-6.1-sol__high"
+    ],
+    "a": [
+      "cursor__grok-4.7__high",
+      "devin__swe-2__high",
+      "claude-code-glm__glm-5.3-flash__xhigh"
+    ],
+    "b": [],
+    "c": []
+  }
+}

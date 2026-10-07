@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>池塘边 · Pond Corner</title>
+<link rel="icon" href="data:,">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a1418; }
+  body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+  #app { position: fixed; inset: 0; }
+  #app canvas { display: block; touch-action: none; }
+
+  #title {
+    position: fixed; top: 14px; left: 16px; z-index: 10;
+    color: rgba(255,255,255,.85); pointer-events: none; user-select: none;
+    text-shadow: 0 1px 8px rgba(0,20,30,.6);
+  }
+  #title h1 { font-size: 17px; font-weight: 600; letter-spacing: .12em; }
+  #title p { font-size: 11px; opacity: .65; margin-top: 3px; letter-spacing: .05em; }
+
+  #hint {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
+    color: rgba(255,255,255,.9); font-size: 12px; letter-spacing: .06em;
+    background: rgba(10, 25, 32, .45); backdrop-filter: blur(8px);
+    padding: 7px 14px; border-radius: 99px; pointer-events: none;
+    border: 1px solid rgba(255,255,255,.12);
+    transition: opacity 1s ease; white-space: nowrap;
+  }
+  #hint.fade { opacity: 0; }
+
+  #toolbar {
+    position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+    z-index: 10; display: flex; align-items: center; gap: 8px;
+    background: rgba(8, 22, 28, .55); backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.14); border-radius: 16px;
+    padding: 8px 10px; user-select: none;
+    max-width: calc(100vw - 16px); flex-wrap: wrap; justify-content: center;
+  }
+  .tgroup { display: flex; gap: 4px; align-items: center; }
+  .sep { width: 1px; height: 22px; background: rgba(255,255,255,.14); margin: 0 2px; }
+
+  .tbtn {
+    border: 1px solid transparent; background: transparent; color: rgba(255,255,255,.78);
+    font-size: 12.5px; padding: 7px 11px; border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 5px; letter-spacing: .03em;
+    transition: background .15s, color .15s, border-color .15s;
+    -webkit-tap-highlight-color: transparent; font-family: inherit;
+  }
+  .tbtn:hover { background: rgba(255,255,255,.09); }
+  .tbtn.on { background: rgba(120, 200, 235, .22); color: #cfefff; border-color: rgba(140, 215, 245, .4); }
+  .tbtn .ico { font-size: 14px; line-height: 1; }
+
+  .wind { display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.78); font-size: 12.5px; padding: 0 4px; }
+  .wind input[type=range] {
+    -webkit-appearance: none; width: 84px; height: 4px; border-radius: 4px;
+    background: rgba(255,255,255,.22); outline: none; cursor: pointer;
+  }
+  .wind input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #bfe8ff; border: none; box-shadow: 0 0 6px rgba(140,220,255,.6);
+  }
+  .wind input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #bfe8ff; border: none;
+  }
+
+  @media (max-width: 520px) {
+    #title h1 { font-size: 14px; }
+    #title p { display: none; }
+    .tbtn { padding: 7px 8px; font-size: 12px; }
+    .wind input[type=range] { width: 60px; }
+    #hint { font-size: 11px; top: 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="title"><h1>池 塘 一 隅</h1><p>拖动旋转 · 滚轮缩放 · 点击水面</p></div>
+<div id="hint">轻点水面，激起一圈涟漪</div>
+<div id="toolbar">
+  <div class="tgroup" id="tools">
+    <button class="tbtn on" data-tool="tap"><span class="ico">💧</span>涟漪</button>
+    <button class="tbtn" data-tool="stone"><span class="ico">🪨</span>石子</button>
+    <button class="tbtn" data-tool="boat"><span class="ico">⛵</span>纸船</button>
+    <button class="tbtn" data-tool="food"><span class="ico">🍚</span>鱼食</button>
+  </div>
+  <div class="sep"></div>
+  <div class="wind"><span>风</span><input type="range" id="wind" min="0" max="1" step="0.01" value="0.25"></div>
+  <div class="sep"></div>
+  <div class="tgroup">
+    <button class="tbtn" id="rainBtn"><span class="ico">🌧</span>雨</button>
+  </div>
+  <div class="sep"></div>
+  <div class="tgroup" id="tod">
+    <button class="tbtn on" data-tod="0">白天</button>
+    <button class="tbtn" data-tod="1">黄昏</button>
+    <button class="tbtn" data-tod="2">夜晚</button>
+  </div>
+</div>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

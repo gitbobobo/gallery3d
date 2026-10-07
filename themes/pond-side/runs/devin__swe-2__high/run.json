@@ -1,0 +1,27 @@
+{
+  "runId": "devin__swe-2__high",
+  "theme": "pond-side",
+  "harness": "devin",
+  "model": "swe-2-high",
+  "effort": "high",
+  "modelArg": "swe-2-high",
+  "harnessVersion": "devin 3000.11.3 (9c803229faa4)",
+  "manual": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "preparedAt": "2026-10-06T19:08:30.864Z",
+  "launchedAt": "2026-10-06T19:08:30.913Z",
+  "finishedAt": "2026-10-06T20:05:00.087Z",
+  "importedAt": "2026-10-06T20:05:53.990Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 3389174,
+    "costUsd": null,
+    "tokensIn": 14910877,
+    "tokensOut": 97199,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 2139316
+  },
+  "notes": true
+}

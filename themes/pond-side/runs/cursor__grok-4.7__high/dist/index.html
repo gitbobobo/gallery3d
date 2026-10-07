@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>池塘一角</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="./assets/index-DPTStFUC.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CzK3lAMb.css">
+</head>
+<body>
+  <div id="app">
+    <div id="stage"></div>
+    <div class="hud">
+      <div class="panel">
+        <div class="tools" role="toolbar" aria-label="水面道具">
+          <button type="button" data-tool="ripple" aria-pressed="true">点水面</button>
+          <button type="button" data-tool="stone" aria-pressed="false">石子</button>
+          <button type="button" data-tool="boat" aria-pressed="false">纸船</button>
+          <button type="button" data-tool="food" aria-pressed="false">鱼食</button>
+        </div>
+        <label class="wind">风
+          <input id="wind" type="range" min="0" max="100" value="22" aria-label="风力" />
+          <span id="wind-name">微风</span>
+        </label>
+        <button type="button" id="rain" aria-pressed="false">雨</button>
+        <div class="times" role="toolbar" aria-label="时间">
+          <button type="button" data-time="0" aria-pressed="true">白天</button>
+          <button type="button" data-time="1" aria-pressed="false">黄昏</button>
+          <button type="button" data-time="2" aria-pressed="false">夜晚</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

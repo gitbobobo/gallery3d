@@ -1,0 +1,334 @@
+:root {
+  --moss: rgba(22, 36, 29, 0.56);
+  --moss-solid: #16241d;
+  --rice: #eeeadf;
+  --rice-dim: rgba(238, 234, 223, 0.62);
+  --lotus: #e9a3b1;
+  --willow: #b5c98e;
+  --cinnabar: #b8402f;
+  --font: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1a2620;
+  color: var(--rice);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  outline: none;
+}
+
+/* vertical inscription, like the colophon on a scroll painting */
+.colophon {
+  position: fixed;
+  top: 22px;
+  left: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  writing-mode: vertical-rl;
+  pointer-events: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+.colophon h1 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: 0.32em;
+  line-height: 1;
+}
+.colophon p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--rice-dim);
+  line-height: 1;
+}
+.seal {
+  writing-mode: horizontal-tb;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: var(--cinnabar);
+  color: #f6e7dc;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: none;
+  opacity: 0.88;
+}
+
+.hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 6px);
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--rice);
+  background: rgba(22, 36, 29, 0.42);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  white-space: nowrap;
+}
+.hint.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.panel {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  background: var(--moss);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(238, 234, 223, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(6, 14, 10, 0.28);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.group + .group {
+  padding-left: 8px;
+  border-left: 1px solid rgba(238, 234, 223, 0.14);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 14px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--lotus);
+  outline-offset: 2px;
+}
+button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tools button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 56px;
+  padding: 7px 8px 6px;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  color: var(--rice-dim);
+}
+.tools button:hover {
+  color: var(--rice);
+  background: rgba(238, 234, 223, 0.06);
+}
+.tools button[aria-checked='true'] {
+  color: var(--moss-solid);
+  background: var(--lotus);
+}
+
+.wind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.wind-label {
+  color: var(--rice-dim);
+}
+.wind input {
+  --fill: 30%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 108px;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+.wind input::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--willow) var(--fill), rgba(238, 234, 223, 0.2) var(--fill));
+}
+.wind input::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--willow) var(--fill), rgba(238, 234, 223, 0.2) var(--fill));
+}
+.wind input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6.5px;
+  border-radius: 50%;
+  background: var(--rice);
+  border: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.wind input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--rice);
+  border: 0;
+}
+
+.rain {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--rice-dim);
+}
+.rain:hover {
+  color: var(--rice);
+  background: rgba(238, 234, 223, 0.06);
+}
+.rain[aria-pressed='true'] {
+  color: var(--moss-solid);
+  background: var(--willow);
+}
+
+.time {
+  display: flex;
+  padding: 3px;
+  margin-left: 4px;
+  border-radius: 14px;
+  background: rgba(238, 234, 223, 0.07);
+}
+.time button {
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: 11px;
+  color: var(--rice-dim);
+  letter-spacing: 0.06em;
+}
+.time button:hover {
+  color: var(--rice);
+}
+.time button[aria-checked='true'] {
+  color: var(--moss-solid);
+  background: var(--rice);
+}
+
+.fallback {
+  display: none;
+}
+.no-webgl .fallback {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  font-size: 15px;
+}
+
+/* narrow layouts: two rows across the bottom */
+@media (max-width: 640px) {
+  .panel {
+    left: 10px;
+    right: 10px;
+    transform: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 18px;
+  }
+  .group {
+    justify-content: space-between;
+  }
+  .group + .group {
+    padding-left: 0;
+    padding-top: 5px;
+    border-left: 0;
+    border-top: 1px solid rgba(238, 234, 223, 0.12);
+  }
+  .tools button {
+    flex: 1;
+    min-width: 0;
+  }
+  .wind {
+    flex: 1;
+    min-width: 0;
+    padding-left: 8px;
+  }
+  .wind input {
+    width: 100%;
+    min-width: 60px;
+  }
+  .time {
+    margin-left: 2px;
+  }
+  .time button {
+    padding: 7px 8px;
+  }
+  .rain {
+    padding: 8px;
+  }
+  .hint {
+    bottom: calc(140px + env(safe-area-inset-bottom));
+  }
+  .colophon {
+    top: 14px;
+    left: 14px;
+  }
+  .colophon h1 {
+    font-size: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint,
+  button {
+    transition: none;
+  }
+}

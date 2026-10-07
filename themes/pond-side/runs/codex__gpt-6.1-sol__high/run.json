@@ -1,0 +1,27 @@
+{
+  "runId": "codex__gpt-6.1-sol__high",
+  "theme": "pond-side",
+  "harness": "codex",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "modelArg": "gpt-6.1-sol",
+  "harnessVersion": "codex-cli 0.160.0",
+  "manual": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "preparedAt": "2026-10-06T19:08:30.864Z",
+  "launchedAt": "2026-10-06T19:08:30.945Z",
+  "finishedAt": "2026-10-06T19:44:46.474Z",
+  "importedAt": "2026-10-06T19:45:22.040Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 2175529,
+    "costUsd": null,
+    "tokensIn": 2646790,
+    "tokensOut": 49366,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 655725
+  },
+  "notes": true
+}

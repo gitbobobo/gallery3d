@@ -1,0 +1,27 @@
+{
+  "runId": "claude-code-glm__glm-5.3-flash__xhigh",
+  "theme": "pond-side",
+  "harness": "claude-code-glm",
+  "model": "glm-5.3-flash[1m]",
+  "effort": "xhigh",
+  "modelArg": null,
+  "harnessVersion": "2.1.288 (Claude Code)",
+  "manual": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "preparedAt": "2026-10-06T20:29:51.609Z",
+  "launchedAt": "2026-10-06T20:29:51.834Z",
+  "finishedAt": "2026-10-06T21:51:15.906Z",
+  "importedAt": "2026-10-06T21:51:27.684Z",
+  "status": "ok",
+  "reasons": [],
+  "stats": {
+    "durationMs": 4884072,
+    "costUsd": 15.049029000000004,
+    "tokensIn": 380271,
+    "tokensOut": 159767,
+    "consoleErrors": 0,
+    "externalDomains": [],
+    "distBytes": 599408
+  },
+  "notes": true
+}

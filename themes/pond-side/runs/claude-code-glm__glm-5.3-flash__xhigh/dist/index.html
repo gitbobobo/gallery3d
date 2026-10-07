@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>池塘一隅</title>
+  <script type="module" crossorigin src="./assets/index-CMu2NGbP.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BZJsGduo.css">
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="fade"></div>
+  <div id="ui">
+    <div id="brand">
+      <div class="brand-title">池塘一隅</div>
+      <div class="brand-sub" id="hint">点击水面激起涟漪 · 拖动旋转 · 滚轮缩放</div>
+    </div>
+    <div id="panel">
+      <div class="group tools">
+        <button class="tool active" data-tool="ripple" title="点击水面激起涟漪">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/><circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1" opacity=".4"/></svg>
+          <span>涟漪</span>
+        </button>
+        <button class="tool" data-tool="stone" title="向水面扔一颗石子">
+          <svg viewBox="0 0 24 24"><path d="M7 16.5c-2 0-3.6-1.4-3.6-3.2 0-1.9 1.8-3.4 4-3.4.6-1.7 2.3-2.9 4.3-2.9 2.5 0 4.6 1.8 4.8 4.1 1.8.2 3.1 1.5 3.1 3.1 0 1.7-1.5 2.9-3.4 2.9H7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <span>石子</span>
+        </button>
+        <button class="tool" data-tool="boat" title="放一只纸船到水面">
+          <svg viewBox="0 0 24 24"><path d="M3 14h18l-3.5 5h-11L3 14z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3.5 15.5 14h-7L12 3.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <span>纸船</span>
+        </button>
+        <button class="tool" data-tool="food" title="撒一把鱼食，锦鲤会来抢食">
+          <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="1.7" fill="currentColor"/><circle cx="14.5" cy="6.5" r="1.4" fill="currentColor"/><circle cx="17.5" cy="11.5" r="1.7" fill="currentColor"/><circle cx="11" cy="13.5" r="1.3" fill="currentColor"/><path d="M4.5 17.5c4.5 2.2 10.5 2.2 15 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span>鱼食</span>
+        </button>
+      </div>
+      <div class="sep"></div>
+      <div class="group sliders">
+        <label class="wind">
+          <span class="lab">风</span>
+          <input id="wind" type="range" min="0" max="100" value="26" />
+          <span class="lab" id="windLabel">微风</span>
+        </label>
+        <div class="toggles">
+          <button id="rainBtn" class="chip">雨</button>
+          <div class="timeseg">
+            <button class="chip seg active" data-time="day">白天</button>
+            <button class="chip seg" data-time="dusk">黄昏</button>
+            <button class="chip seg" data-time="night">夜晚</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

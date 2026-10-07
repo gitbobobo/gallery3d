@@ -1,0 +1,31 @@
+{
+  "runId": "devin__opus-5.5__high",
+  "theme": "pond-side",
+  "harness": "devin",
+  "model": "claude-opus-5-5-high",
+  "effort": "high",
+  "modelArg": "claude-opus-5-5-high",
+  "harnessVersion": "devin 3000.11.3 (9c803229faa4)",
+  "manual": false,
+  "promptSha256": "077ac58ad960e93d2dbd2fe8cefd616ee4ad62c4ac4e50170dfc93764e47da66",
+  "preparedAt": "2026-10-06T20:09:06.934Z",
+  "launchedAt": "2026-10-06T20:09:06.963Z",
+  "finishedAt": "2026-10-06T21:25:57.274Z",
+  "importedAt": "2026-10-06T21:26:38.002Z",
+  "status": "incomplete",
+  "reasons": [
+    "提前停止"
+  ],
+  "stats": {
+    "durationMs": 4610311,
+    "costUsd": null,
+    "tokensIn": null,
+    "tokensOut": null,
+    "consoleErrors": 2,
+    "externalDomains": [
+      "fonts.googleapis.com"
+    ],
+    "distBytes": 707174
+  },
+  "notes": false
+}
