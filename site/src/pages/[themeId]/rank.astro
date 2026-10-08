@@ -14,10 +14,9 @@ interface Props { theme: Theme }
 const { theme } = Astro.props;
 const { tiers, rows } = theme.ratings;
 
-// 只汇总仍存在 tiers 的等级行：ratings.json 里已删等级残留的 runId
-// 不能算"已评级"，否则那些答卷既进不了等级行也进不了未评级池
-const placed = new Set(tiers.flatMap((t) => rows[t.id] ?? []));
-const pool = theme.runs.filter((r) => !placed.has(r.id));
+// rows 已由 normalizeRatings 清洗（每 run 至多出现在一个等级行），
+// 未出现在任何等级行的即未评级
+const pool = theme.runs.filter((r) => r.tierId === undefined);
 const cardLabel = (r: Theme['runs'][number]) => `${r.modelName} · ${r.harnessName}`;
 const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
 ---
@@ -99,7 +98,8 @@ const cover = (r: Theme['runs'][number]) => r.coverDesktop ?? r.coverMobile;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const snapshot = () => {
-      const rows: Record<string, string[]> = {};
+      // 无原型字典：tier id 允许 '__proto__' 这类特殊字符串
+      const rows: Record<string, string[]> = Object.create(null);
       board.querySelectorAll<HTMLElement>('.tier-body').forEach((body) => {
         const id = body.dataset.tier ?? '';
         if (!id) return;

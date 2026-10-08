@@ -21,7 +21,8 @@ themes/<themeId>/
                  works/<themeId>/reference/，在画廊页题目卡里展示。不参与 promptSha256，
                  有答卷后同样视为锁定，要换图就新建题目
   ratings.json   { tiers: [{id,label,color}], rows: { tierId: [runId, ...] } }
-                 rows 数组顺序即同等级内名次；缺文件时用 DEFAULT_TIERS
+                 rows 数组顺序即同等级内名次；缺文件时用 DEFAULT_TIERS；
+                 读（data.ts）写（rank API）都经 normalizeRatings 清洗
   runs/<runId>/
     run.json     { harness, model, modelId, effort, status: ok|incomplete, reasons?, stats{...}, ... }
                  modelId = models.json 的模型 id（未登记模型时是原始 modelArg；新导入记录必有；旧记录可能缺）
@@ -36,8 +37,9 @@ data/harnesses.json、data/models.json   id → 显示名映射（可选，缺�
 - `modelKey`：非空 `run.json.modelId` 优先（新导入记录）；旧记录回退目录名按 `__` 切三段取中段（`harness__model__effort`），再回退 `model`。筛选的"模型"维度按 modelKey 去重。
 - `modelName`/`harnessName`：走 data/ 显示名映射，缺省回退原始值。
 - `place`：已评级 run 的全局名次（等级序 → 行内序），1 起。
-- `tierGroups`：按 tiers 顺序分组 + 尾部未评级组（tier=null）；ratings 里未知 tier id 的 run 视为未评级（防止丢卡）。
-- 排序：已评级在前（tier 序 + rank），未评级按完成时间；指向不存在 run 的脏数据被剔除。
+- `normalizeRatings`（site/src/ratings.ts）：ratings 读写共用的清洗——tiers 只留 id/label 非空项（重复 id 取首次，color 缺省回退），全无效时回退 DEFAULT_TIERS；rows 只留已声明等级的 key，runId 全局去重（等级声明序 → 行内序，首次有效出现胜出），失效引用剔除；未知等级行里的 run 不占名额、回到未评级池；幂等、不改入参。
+- `tierGroups`：按 tiers 顺序分组 + 尾部未评级组（tier=null）；清洗后每个 run 至多出现在一个等级，不在任何等级行的即未评级。
+- 排序：已评级在前（tier 序 + rank），未评级按完成时间。
 - 坏数据原则：畸形的 run/theme 静默跳过，绝不让 build 失败。
 
 ## 视觉系统（site/src/styles/global.css）
@@ -56,5 +58,5 @@ data/harnesses.json、data/models.json   id → 显示名映射（可选，缺�
 - iframe 一律 `sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"`。
 - 所有站内 URL 必须走 `baseUrl()`/`workUrl()`，不要手写 `/` 开头的路径——子路径部署会断。
 - works/ 目录由 `predev`/`prebuild` 跑 `site/scripts/sync-works.mjs` 从 themes/ 全量重建，不要手改 `site/public/works/`。
-- rank API（`__api/rate`）是 astro.config.mjs 里的 vite middleware，只在 dev server 存在；只接受真实存在的 runId，未知 tier id 的 rows 会被清理。
+- rank API（`__api/rate`）是 astro.config.mjs 里的 vite middleware，只在 dev server 存在；写入前对 {tiers, rows} 跑同一份 normalizeRatings，落盘的 ratings.json 总是规范化结果（无未知等级 key、无重复 runId、无失效引用）。注意两端 validRunIds 口径不同：写路径认「存在的 run 目录」，读路径认「run.json 解析成功的 run」——目录存在但 run.json 畸形的 id 可被写入，随后读路径剔除，属有意宽松（写时不重扫 run.json）。
 - 降级与无障碍：警示用文字+粗体（`▲`、`· 未完成`）而非纯颜色；focus 可见；`prefers-reduced-motion` 关动效。
