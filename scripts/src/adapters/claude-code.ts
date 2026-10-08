@@ -1,3 +1,5 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import type { Adapter, AdapterContext, RunAttempt, RunStats } from './types.ts';
 
 // claude --output-format stream-json 的 JSONL 事件渲染
@@ -79,6 +81,6 @@ export const claudeCodeGlm = makeClaudeAdapter({
 
 export const claudeCodeMinimax = makeClaudeAdapter({
   label: 'Claude Code (MiniMax)',
-  settingsFile: '/Users/godbobo/.claude/settings.minimax.json',
+  settingsFile: join(homedir(), '.claude', 'settings.minimax.json'),
   recordedModel: 'minimax-m3',
 });

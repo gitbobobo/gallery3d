@@ -1,5 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { getAdapter } from '../adapters/index.ts';
+import type { Adapter } from '../adapters/types.ts';
 import { dataDir } from './paths.ts';
 import { harnessSchema, modelsFileSchema, themeSchema } from './schemas.ts';
 import type { Harness, ModelEntry, Theme } from './schemas.ts';
@@ -16,6 +18,16 @@ export function getHarness(id: string): Harness {
   const h = loadHarnesses().find((x) => x.id === id);
   if (!h) throw new Error(`未知 harness：${id}（见 data/harnesses.json）`);
   return h;
+}
+
+/** harness id → adapter 两跳解析：marker/runId 里存的是 harness id，adapter 才是代码里的键 */
+export function adapterForHarness(harnessId: string): Adapter {
+  const harness = getHarness(harnessId);
+  try {
+    return getAdapter(harness.adapter);
+  } catch {
+    throw new Error(`未知 adapter：${harness.adapter}（harness ${harnessId} 的 adapter 字段，见 data/harnesses.json）`);
+  }
 }
 
 export function loadModels(): ModelEntry[] {

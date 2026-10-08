@@ -2,10 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { getAdapter } from '../adapters/index.ts';
 import { runImport } from '../lib/importer.ts';
 import { requireThemeDir, runDir } from '../lib/paths.ts';
-import { getHarness, loadHarnesses, loadTheme, modelsForHarness, saveTheme, addModelMapping } from '../lib/registry.ts';
+import { adapterForHarness, getHarness, loadHarnesses, loadTheme, modelsForHarness, saveTheme, addModelMapping } from '../lib/registry.ts';
 import { harnessVersion, runAdapter } from '../lib/runner.ts';
 import type { RunOutcome } from '../lib/runner.ts';
 import { readMarker, writeMarker } from '../lib/workspace.ts';
@@ -76,7 +75,7 @@ export async function cmdRun(args: string[]): Promise<void> {
     harnessId = await pick('选择 harness', hs.map((h) => ({ value: h.id, label: h.displayName, hint: h.notes })));
   }
   const harness = getHarness(harnessId);
-  const adapter = getAdapter(harness.adapter);
+  const adapter = adapterForHarness(harness.id);
 
   // 2. model
   let modelId: string | undefined;
