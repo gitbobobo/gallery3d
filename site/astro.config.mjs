@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { normalizeRatings } from './src/ratings.ts';
 
 // BASE_URL controls the base path when the site is deployed under a
 // sub-path (e.g. GitHub Pages). Defaults to '/'.
@@ -27,25 +28,18 @@ const rateApi = {
           if (typeof theme !== 'string' || /[^\w.-]/.test(theme)) throw new Error('bad theme');
           const dir = join(themesDir, theme);
           if (!existsSync(join(dir, 'theme.json'))) throw new Error('no theme');
-          // 只允许登记真实存在的 runId
+          // 与读路径同一份清洗：只允许真实存在的 runId，全局去重，
+          // 未知等级 key 丢弃（其中 runId 回到未评级池）
           const runsDir = join(dir, 'runs');
           const valid = new Set(
             existsSync(runsDir)
               ? readdirSync(runsDir).filter((d) => statSync(join(runsDir, d)).isDirectory())
               : [],
           );
-          const cleanRows = {};
-          for (const [k, v] of Object.entries(rows ?? {})) {
-            cleanRows[k] = Array.isArray(v) ? v.filter((id) => valid.has(id)) : [];
-          }
-          const cleanTiers = Array.isArray(tiers)
-            ? tiers
-                .filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string')
-                .map((t) => ({ id: t.id, label: t.label, color: String(t.color ?? '#d9dde3') }))
-            : [];
+          const clean = normalizeRatings({ tiers, rows }, valid);
           writeFileSync(
             join(dir, 'ratings.json'),
-            JSON.stringify({ tiers: cleanTiers, rows: cleanRows }, null, 2) + '\n',
+            JSON.stringify(clean, null, 2) + '\n',
           );
           res.setHeader('content-type', 'application/json');
           res.end('{"ok":true}');

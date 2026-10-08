@@ -14,6 +14,12 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { normalizeRatings, type Ratings, type Tier } from './ratings';
+
+// Tier/Ratings/DEFAULT_TIERS 住在 ratings.ts（rate API 也 import 它），
+// 这里 re-export 保持既有 `from './data'` / `from '../data'` 的引用不断。
+export { DEFAULT_TIERS } from './ratings';
+export type { Ratings, Tier } from './ratings';
 
 // NOTE: do not anchor on import.meta.url here — data.ts is bundled by vite
 // during `astro build` and the resulting URL no longer points at src/.
@@ -104,18 +110,6 @@ export interface Run {
   coverMobile?: string;
 }
 
-export interface Tier {
-  id: string;
-  label: string;
-  color: string;
-}
-
-/** themes/<id>/ratings.json — rows 的数组顺序就是同等级内的名次 */
-export interface Ratings {
-  tiers: Tier[];
-  rows: Record<string, string[]>;
-}
-
 export interface Theme {
   /** filesystem directory name — canonical id used in URLs */
   id: string;
@@ -134,16 +128,6 @@ const readReferences = (themeDir: string): string[] => {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).filter((f) => IMAGE_EXT.test(f)).sort();
 };
-
-/** 默认等级表（无 ratings.json 时使用），meme 式自上而下 */
-export const DEFAULT_TIERS: Tier[] = [
-  { id: 'agi', label: 'AGI', color: '#e4554f' },
-  { id: 's-plus', label: 'S+', color: '#f0a03c' },
-  { id: 's', label: 'S', color: '#efe04b' },
-  { id: 'a', label: 'A', color: '#f3ead3' },
-  { id: 'b', label: 'B', color: '#e4e0d4' },
-  { id: 'c', label: 'C', color: '#d9dde3' },
-];
 
 const readJson = (p: string): unknown => {
   try {
@@ -263,23 +247,8 @@ const readRun = (
 const runSortKey = (r: Run): string =>
   r.finishedAt ?? r.importedAt ?? r.preparedAt ?? '';
 
-const readRatings = (themeDir: string): Ratings => {
-  const j = readJson(join(themeDir, 'ratings.json'));
-  const tiers: Tier[] = [];
-  if (isObj(j) && Array.isArray(j.tiers)) {
-    for (const t of j.tiers) {
-      if (!isObj(t)) continue;
-      const id = str(t.id);
-      const label = str(t.label);
-      if (id && label) tiers.push({ id, label, color: str(t.color) ?? '#d9dde3' });
-    }
-  }
-  const rows: Record<string, string[]> = {};
-  if (isObj(j) && isObj(j.rows)) {
-    for (const [k, v] of Object.entries(j.rows)) rows[k] = strArr(v);
-  }
-  return { tiers: tiers.length ? tiers : DEFAULT_TIERS, rows };
-};
+const readRatings = (themeDir: string, validRunIds: ReadonlySet<string>): Ratings =>
+  normalizeRatings(readJson(join(themeDir, 'ratings.json')), validRunIds);
 
 const readTheme = (dirName: string, names: DisplayMaps): Theme | null => {
   const themeDir = join(THEMES_DIR, dirName);
@@ -293,7 +262,6 @@ const readTheme = (dirName: string, names: DisplayMaps): Theme | null => {
   } catch {
     /* keep empty */
   }
-  const ratings = readRatings(themeDir);
   const runsDir = join(themeDir, 'runs');
   const runs: Run[] = [];
   if (existsSync(runsDir)) {
@@ -308,15 +276,11 @@ const readTheme = (dirName: string, names: DisplayMaps): Theme | null => {
       }
     }
   }
-  // 标注等级/名次；丢弃指向不存在 run 的脏数据；rows 里不在 tiers 中的
-  // 等级 id 跳过（那些 run 视为未评级，否则分组时会丢卡）
+  // rows 已规范化：失效引用/未知等级/重复 runId 都已清掉，直接标注名次
+  const ratings = readRatings(themeDir, new Set(runs.map((r) => r.id)));
   const tierOrder = new Map(ratings.tiers.map((t, i) => [t.id, i]));
-  const validIds = new Set(runs.map((r) => r.id));
   for (const [tierId, ids] of Object.entries(ratings.rows)) {
-    if (!tierOrder.has(tierId)) continue;
-    const clean = ids.filter((id) => validIds.has(id));
-    if (clean.length !== ids.length) ratings.rows[tierId] = clean;
-    clean.forEach((id, i) => {
+    ids.forEach((id, i) => {
       const r = runs.find((x) => x.id === id);
       if (r) { r.tierId = tierId; r.rank = i; }
     });
