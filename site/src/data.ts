@@ -72,7 +72,7 @@ export interface Run {
   themeId: string;
   harness: string;
   model: string;
-  /** models.json 的 id：目录名按 `__` 切成 3 段时取中段，否则用 model */
+  /** models.json 的 id：非空 run.json.modelId 优先；旧记录回退目录名 `__` 中段，再回退 model */
   modelKey: string;
   /** models.json 的 display，缺省回退 model */
   modelName: string;
@@ -220,7 +220,8 @@ const readRun = (
     notesMd = undefined;
   }
   const parts = dirName.split('__');
-  const modelKey = parts.length === 3 ? parts[1] : model;
+  // 非空 modelId 优先（新导入记录）；旧记录回退目录名 `__` 中段，再回退 model
+  const modelKey = str(j.modelId) ?? (parts.length === 3 ? str(parts[1]) : undefined) ?? model;
   return {
     id: dirName,
     runId: str(j.runId) ?? dirName,

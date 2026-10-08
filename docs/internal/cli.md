@@ -23,6 +23,8 @@
 
 `plan(ctx)` 给出按序尝试的 argv（`shouldRetry`/`retryMarkerPatch` 控制降级重试）；`recordModel(model, modelArg)` 决定写进 run.json 的 model；`extractStats`/`postRunStats` 补统计；`renderLine` 把 stdout 流渲染到终端；`deriveEffort`/`effortOptions`/`defaultEffort` 驱动交互选择；`extraFiles` 往工作区写补充说明文件。
 
+run.json 现在同时记录 `modelId`：直接取自 `marker.combo.model`（models.json 的模型 id，未登记时是原始 modelArg），不经过 adapter 换算，也不被 runId 清洗改变（runId 目录名里的同名字段是 `sanitizeRunId` 清洗后的不可逆形式）。
+
 ## 各 harness 的外部约定
 
 - `claude-code-minimax`：argv 追加 `--settings ~/.claude/settings.minimax.json`（按当前用户主目录解析，需在每台机器上自备该文件）；`claude-code-glm` 走默认 `~/.claude/settings.json`，不传 `--model`。
