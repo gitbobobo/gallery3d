@@ -23,7 +23,8 @@ themes/<themeId>/
   ratings.json   { tiers: [{id,label,color}], rows: { tierId: [runId, ...] } }
                  rows 数组顺序即同等级内名次；缺文件时用 DEFAULT_TIERS
   runs/<runId>/
-    run.json     { harness, model, effort, status: ok|incomplete, reasons?, stats{...}, ... }
+    run.json     { harness, model, modelId, effort, status: ok|incomplete, reasons?, stats{...}, ... }
+                 modelId = models.json 的模型 id（未登记模型时是原始 modelArg；新导入记录必有；旧记录可能缺）
     dist/index.html   产物入口；资源必须相对路径（答卷侧契约，见 scripts 的 agents-md 模板）
     thumb.webp / thumb-mobile.webp   1440x900 / 390x844 封面（png 也容忍）
     NOTES.md     可选，展示在 view 页抽屉里
@@ -32,7 +33,7 @@ data/harnesses.json、data/models.json   id → 显示名映射（可选，缺�
 
 ## 关键派生（site/src/data.ts）
 
-- `modelKey`：目录名按 `__` 切三段取中段（`harness__model__effort`），否则用 `model`。筛选的"模型"维度按 modelKey 去重。
+- `modelKey`：非空 `run.json.modelId` 优先（新导入记录）；旧记录回退目录名按 `__` 切三段取中段（`harness__model__effort`），再回退 `model`。筛选的"模型"维度按 modelKey 去重。
 - `modelName`/`harnessName`：走 data/ 显示名映射，缺省回退原始值。
 - `place`：已评级 run 的全局名次（等级序 → 行内序），1 起。
 - `tierGroups`：按 tiers 顺序分组 + 尾部未评级组（tier=null）；ratings 里未知 tier id 的 run 视为未评级（防止丢卡）。

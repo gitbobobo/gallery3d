@@ -157,6 +157,7 @@ export async function runImport(opts: {
     theme: opts.themeId,
     harness: marker.combo.harness,
     model: adapter.recordModel(marker.combo.model, marker.combo.modelArg),
+    modelId: marker.combo.model,
     effort: marker.combo.effort,
     modelArg: marker.combo.modelArg,
     harnessVersion: opts.harnessVersion ?? readHarnessVersionFile(opts.ws),

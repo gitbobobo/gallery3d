@@ -61,6 +61,7 @@ export const runSchema = z.object({
   theme: z.string(),
   harness: z.string(),
   model: z.string(),
+  modelId: z.string(),
   effort: z.string(),
   modelArg: z.string().nullable(),
   harnessVersion: z.string().nullable(),
