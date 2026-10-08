@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
-import { appendFileSync, createWriteStream, readFileSync } from 'node:fs';
-import type { Adapter, AdapterContext, RunStats } from '../adapters/types.ts';
+import { appendFileSync, createWriteStream, existsSync, readFileSync } from 'node:fs';
+import type { Adapter, AdapterContext, RunAttempt, RunStats } from '../adapters/types.ts';
 import { readMarker, writeMarker } from './workspace.ts';
 
 export interface RunOutcome {
@@ -28,6 +28,8 @@ function runAttempt(
     const [bin, ...args] = argv;
     const child = spawn(bin!, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
     const log = createWriteStream(logPath, { flags: 'a' });
+    // 日志写失败不致命；常驻监听防 unhandled error
+    log.on('error', () => {});
     let stdoutBuf = '';
     let stderrBuf = '';
 
@@ -53,13 +55,30 @@ function runAttempt(
       // stderr 直接透传，保持滚动可见
       process.stderr.write(d);
     });
-    child.on('error', reject);
-    child.on('close', (code) => { flushLines(true); log.end(); resolve(code); });
+    // 等写流落盘再 settle：统计行在日志尾部，缺尾会永久丢统计；flush 途中出错也兜底 settle
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      log.once('error', fn);
+      log.end(fn);
+    };
+    child.on('error', (e) => settle(() => reject(e)));
+    child.on('close', (code) => { flushLines(true); settle(() => resolve(code)); });
   });
 }
 
-export async function runAdapter(ctx: AdapterContext, adapter: Adapter): Promise<RunOutcome> {
-  const attempts = adapter.plan(ctx);
+/** 收集一次运行的统计：日志存在且非空才调 extractStats（读取/解析失败降级 {}），postRunStats 结果覆盖同名键 */
+export function collectRunStats(adapter: Adapter, ws: string, logFile: string | null): RunStats {
+  let stats: RunStats = {};
+  try {
+    const logText = logFile && existsSync(logFile) ? readFileSync(logFile, 'utf8') : '';
+    if (logText) stats = adapter.extractStats?.(logText) ?? {};
+  } catch { /* 日志读取/解析失败就算了 */ }
+  return { ...stats, ...adapter.postRunStats?.(ws) };
+}
+
+export async function runAdapter(ctx: AdapterContext, adapter: Adapter, attempts: RunAttempt[]): Promise<RunOutcome> {
   const marker = readMarker(ctx.ws);
   marker.launchedAt = new Date().toISOString();
   writeMarker(ctx.ws, marker);
@@ -94,13 +113,7 @@ export async function runAdapter(ctx: AdapterContext, adapter: Adapter): Promise
   m2.exitCode = exitCode;
   writeMarker(ctx.ws, m2);
 
-  let stats: RunStats = {};
-  try {
-    stats = adapter.extractStats?.(readFileSync(ctx.logFile, 'utf8')) ?? {};
-  } catch { /* 日志解析失败就算了 */ }
-  stats = { ...stats, ...adapter.postRunStats?.(ctx.ws) };
-
-  return { exitCode, stats, attemptsUsed: used };
+  return { exitCode, stats: collectRunStats(adapter, ctx.ws, ctx.logFile), attemptsUsed: used };
 }
 
 /** 拿 harness 版本号（<bin> --version），失败返回 null */

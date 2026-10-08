@@ -4,6 +4,7 @@ import type { RunStats } from '../adapters/types.ts';
 import { runDir, themeDir } from './paths.ts';
 import { probeDist } from './probe.ts';
 import { adapterForHarness, loadTheme } from './registry.ts';
+import { collectRunStats } from './runner.ts';
 import type { Marker, RunJson } from './schemas.ts';
 import { copyDir, copySourceSnapshot, dirSizeBytes, isTextFile, sha256File, walkFiles, writeJson } from './util.ts';
 import { readMarker, writeMarker } from './workspace.ts';
@@ -49,7 +50,8 @@ export async function runImport(opts: {
   themeId: string;
   ws: string;
   runIdOverride?: string;
-  extraStats?: RunStats;
+  /** 调用方（runner）已收集的最终统计：提供则原样使用（含 {}），未提供才在此收集 */
+  collectedStats?: RunStats;
   harnessVersion?: string | null;
   /** 探测/截图总开关（默认开） */
   probe?: boolean;
@@ -139,13 +141,8 @@ export async function runImport(opts: {
   // 绝对路径是信息性 reason，即使 status=ok 也保留
   const finalReasons = reasons;
 
-  // 6. 统计：日志解析 + 适配器补充 + 外部传入
-  let stats: RunStats = {};
-  try {
-    const logText = marker.logFile && existsSync(marker.logFile) ? readFileSync(marker.logFile, 'utf8') : '';
-    if (logText) stats = adapter.extractStats?.(logText) ?? {};
-  } catch { /* ignore */ }
-  stats = { ...stats, ...adapter.postRunStats?.(opts.ws), ...opts.extraStats };
+  // 6. 统计：runner 已收集（含启动失败兜底）就直接用；手动 import 未传才按同一规则收集
+  const stats: RunStats = opts.collectedStats ?? collectRunStats(adapter, opts.ws, marker.logFile);
 
   const launched = marker.launchedAt ? Date.parse(marker.launchedAt) : NaN;
   const finished = marker.finishedAt ? Date.parse(marker.finishedAt) : NaN;
