@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 import { runImport } from '../lib/importer.ts';
 import { requireThemeDir, runDir } from '../lib/paths.ts';
 import { adapterForHarness, getHarness, loadHarnesses, loadTheme, modelsForHarness, saveTheme, addModelMapping } from '../lib/registry.ts';
-import { harnessVersion, runAdapter } from '../lib/runner.ts';
+import { collectRunStats, harnessVersion, runAdapter } from '../lib/runner.ts';
 import type { RunOutcome } from '../lib/runner.ts';
 import { readMarker, writeMarker } from '../lib/workspace.ts';
 import type { Combo } from '../lib/schemas.ts';
@@ -188,7 +188,7 @@ export async function cmdRun(args: string[]): Promise<void> {
   console.log(`\n启动 ${harness.displayName}（${version ?? '版本未知'}）…`);
   let outcome: RunOutcome;
   try {
-    outcome = await runAdapter(ctx, adapter);
+    outcome = await runAdapter(ctx, adapter, attempts);
   } catch (e) {
     // 二进制不存在 / spawn 失败：记为启动失败，仍然走导入留下记录
     console.log(`\nagent 启动失败：${e instanceof Error ? e.message : String(e)}`);
@@ -196,7 +196,7 @@ export async function cmdRun(args: string[]): Promise<void> {
     m.finishedAt = new Date().toISOString();
     m.exitCode = 127;
     writeMarker(ws, m);
-    outcome = { exitCode: 127, stats: {}, attemptsUsed: 0 };
+    outcome = { exitCode: 127, stats: collectRunStats(adapter, ws, logFile), attemptsUsed: 0 };
   }
   console.log(`\nagent 退出：exitCode=${outcome.exitCode}`);
 
@@ -204,7 +204,7 @@ export async function cmdRun(args: string[]): Promise<void> {
   console.log('\n开始导入…');
   const result = await runImport({
     themeId, ws,
-    extraStats: outcome.stats,
+    collectedStats: outcome.stats,
     harnessVersion: version,
   });
   if (result.probeErrors.length) {

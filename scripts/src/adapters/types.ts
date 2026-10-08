@@ -39,7 +39,7 @@ export interface Adapter {
   recordModel: (model: string, modelArg: string | null) => string;
   /** 需要额外写进工作区的说明文件（如 CLAUDE.md） */
   extraFiles?: (ws: string) => { path: string; content: string }[];
-  /** 构造执行计划：按顺序尝试的 argv 列表 */
+  /** 构造执行计划：按顺序尝试的 argv 列表。每次运行只调用一次（可能有工作区外副作用，如 opencode 写 OPENCODE_CONFIG），由调用方把 attempts 传给 runAdapter */
   plan: (ctx: AdapterContext) => RunAttempt[];
   /** 某次 attempt 失败后判断是否继续下一个（返回 true 继续） */
   shouldRetry?: (attemptIndex: number, logTail: string, exitCode: number | null) => boolean;

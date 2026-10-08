@@ -21,7 +21,9 @@
 
 ## adapter 接口（adapters/types.ts）
 
-`plan(ctx)` 给出按序尝试的 argv（`shouldRetry`/`retryMarkerPatch` 控制降级重试）；`recordModel(model, modelArg)` 决定写进 run.json 的 model；`extractStats`/`postRunStats` 补统计；`renderLine` 把 stdout 流渲染到终端；`deriveEffort`/`effortOptions`/`defaultEffort` 驱动交互选择；`extraFiles` 往工作区写补充说明文件。
+`plan(ctx)` 给出按序尝试的 argv（`shouldRetry`/`retryMarkerPatch` 控制降级重试），**每次运行只调一次**——plan 可能有工作区外副作用（如 opencode 写 OPENCODE_CONFIG），`run` 命令生成 attempts 后传给 `runAdapter(ctx, adapter, attempts)` 执行，`--print-argv` 干跑也只调这一次。`recordModel(model, modelArg)` 决定写进 run.json 的 model；`renderLine` 把 stdout 流渲染到终端；`deriveEffort`/`effortOptions`/`defaultEffort` 驱动交互选择；`extraFiles` 往工作区写补充说明文件。
+
+统计收集收口在 `collectRunStats(adapter, ws, logFile)`（`lib/runner.ts`）：日志存在且非空才调 `extractStats`（读取/解析失败降级 `{}`），再把 `postRunStats?.(ws)` 的结果展开覆盖同名键。一次运行只收集一次：`runAdapter` 收尾时调用，自动导入经 `runImport` 的 `collectedStats` 选项复用该结果（显式 `{}` 也原样采用，不再重收集）；手动 `pnpm g import` 不传 `collectedStats`，导入时按需用同一函数收集。`run` 在 agent 启动失败的兜底分支也走 `collectRunStats`，能捞到失败 attempt 留下的部分统计。
 
 run.json 现在同时记录 `modelId`：直接取自 `marker.combo.model`（models.json 的模型 id，未登记时是原始 modelArg），不经过 adapter 换算，也不被 runId 清洗改变（runId 目录名里的同名字段是 `sanitizeRunId` 清洗后的不可逆形式）。
 
