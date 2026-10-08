@@ -1,10 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { getAdapter } from '../adapters/index.ts';
 import type { RunStats } from '../adapters/types.ts';
 import { runDir, themeDir } from './paths.ts';
 import { probeDist } from './probe.ts';
-import { loadTheme } from './registry.ts';
+import { adapterForHarness, loadTheme } from './registry.ts';
 import type { Marker, RunJson } from './schemas.ts';
 import { copyDir, copySourceSnapshot, dirSizeBytes, isTextFile, sha256File, walkFiles, writeJson } from './util.ts';
 import { readMarker, writeMarker } from './workspace.ts';
@@ -75,6 +74,9 @@ export async function runImport(opts: {
     );
   }
 
+  // 先按 marker 的 harness id 解析 adapter：配置已失效时在动旧 run 目录之前就报错
+  const adapter = adapterForHarness(marker.combo.harness);
+
   const outDir = runDir(opts.themeId, runId);
   if (existsSync(outDir)) rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
@@ -138,7 +140,6 @@ export async function runImport(opts: {
   const finalReasons = reasons;
 
   // 6. 统计：日志解析 + 适配器补充 + 外部传入
-  const adapter = getAdapter(marker.combo.harness);
   let stats: RunStats = {};
   try {
     const logText = marker.logFile && existsSync(marker.logFile) ? readFileSync(marker.logFile, 'utf8') : '';

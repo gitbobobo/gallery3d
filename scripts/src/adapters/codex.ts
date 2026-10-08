@@ -2,7 +2,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { Adapter, AdapterContext, RunAttempt, RunStats } from './types.ts';
 
-const pnpmStore = '/Users/godbobo/Library/pnpm/store/v10';
+const pnpmStore = join(homedir(), 'Library/pnpm/store/v10');
 const npmCache = join(homedir(), '.npm');
 
 function renderLine(line: string, obj: unknown | null): string | null {
